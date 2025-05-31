@@ -5,48 +5,51 @@
 
 @layer base {
   :root {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 100%;
+    --foreground: 215 28% 17%;
 
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
 
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
 
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 145 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 28% 17%;
 
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 20% 42%;
 
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 215 28% 17%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 210 40% 96%;
+    --input: 210 40% 96%;
+    --ring: 145 100% 50%;
 
     --radius: 0.5rem;
 
-    /* Custom Gold Colors */
-    --gold: 43 74% 49%;
-    --gold-foreground: 0 0% 0%;
+    /* GolfLabs Brand Colors */
+    --bright-green: 145 100% 50%;
+    --deep-green: 145 100% 40%;
+    --forest-green: 145 100% 27%;
+    --mint: 145 100% 97%;
+    --charcoal: 215 28% 10%;
 
-    --sidebar-background: 0 0% 3.9%;
-    --sidebar-foreground: 0 0% 63.9%;
-    --sidebar-primary: 43 74% 49%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 14.9%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 14.9%;
-    --sidebar-ring: 43 74% 49%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 20% 42%;
+    --sidebar-primary: 145 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 215 28% 17%;
+    --sidebar-border: 210 40% 96%;
+    --sidebar-ring: 145 100% 50%;
   }
 }
 
@@ -58,6 +61,7 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background: #FFFFFF;
   }
 
   /* Smooth scrolling */
@@ -71,60 +75,100 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--background));
+    background: #FFFFFF;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--gold));
+    background: hsl(var(--bright-green));
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--gold) / 0.8);
+    background: hsl(var(--deep-green));
   }
 }
 
 @layer utilities {
-  /* Custom colors */
-  .text-gold {
-    color: hsl(var(--gold));
+  /* GolfLabs Custom Colors */
+  .text-bright-green {
+    color: #00FF88;
   }
 
-  .bg-gold {
-    background-color: hsl(var(--gold));
+  .bg-bright-green {
+    background-color: #00FF88;
   }
 
-  .border-gold {
-    border-color: hsl(var(--gold));
+  .border-bright-green {
+    border-color: #00FF88;
   }
 
-  .bg-gold\/10 {
-    background-color: hsl(var(--gold) / 0.1);
+  .text-deep-green {
+    color: #00CC6A;
   }
 
-  .bg-gold\/20 {
-    background-color: hsl(var(--gold) / 0.2);
+  .bg-deep-green {
+    background-color: #00CC6A;
   }
 
-  .hover\:bg-gold:hover {
-    background-color: hsl(var(--gold));
+  .text-forest-green {
+    color: #008A47;
   }
 
-  .hover\:bg-gold\/90:hover {
-    background-color: hsl(var(--gold) / 0.9);
+  .bg-forest-green {
+    background-color: #008A47;
   }
 
-  .hover\:text-gold:hover {
-    color: hsl(var(--gold));
+  .bg-mint {
+    background-color: #F0FFF8;
   }
 
-  .hover\:border-gold\/50:hover {
-    border-color: hsl(var(--gold) / 0.5);
+  .bg-off-white {
+    background-color: #FAFAFA;
   }
 
-  /* Animations */
+  .text-medium-gray {
+    color: #6B7280;
+  }
+
+  .text-dark-gray {
+    color: #1F2937;
+  }
+
+  .bg-charcoal {
+    background-color: #111827;
+  }
+
+  .hover\:bg-deep-green:hover {
+    background-color: #00CC6A;
+  }
+
+  .hover\:text-bright-green:hover {
+    color: #00FF88;
+  }
+
+  .hover\:border-bright-green:hover {
+    border-color: #00FF88;
+  }
+
+  /* Enhanced Animations */
   .animate-fade-in {
-    animation: fadeIn 1s ease-out;
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
   }
 
   @keyframes fadeIn {
@@ -138,49 +182,75 @@
     }
   }
 
-  /* Typography improvements */
-  .leading-tight {
-    line-height: 1.1;
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
-  .leading-relaxed {
-    line-height: 1.7;
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
-  /* Backdrop blur utilities */
-  .backdrop-blur-md {
-    backdrop-filter: blur(12px);
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 25px 50px rgba(0, 255, 136, 0.15);
+  }
+
+  /* Button animations */
+  .btn-hover {
+    transition: all 0.2s ease;
+  }
+
+  .btn-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 255, 136, 0.25);
   }
 }
 
-/* Additional custom animations */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+/* Staggered animations for children */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeIn 0.6s ease-out forwards;
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
+.stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
 
 /* Gradient text effect */
 .gradient-text {
-  background: linear-gradient(135deg, hsl(var(--gold)), #ffffff);
+  background: linear-gradient(135deg, #00FF88, #00CC6A);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-/* Card hover effects */
-.card-hover {
-  transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(212, 175, 55, 0.15);
 }
