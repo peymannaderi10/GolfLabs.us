@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, Star, ChevronDown, Play, Users, Shield, Zap } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Calendar, Clock3, MapPin, Star, ChevronDown, Play, Users, Shield, Zap, Check, Lock, Smartphone, Target, Sun } from "lucide-react";
 
 const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -40,6 +41,50 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const pricingTiers = [
+    {
+      name: "Off-Peak Hours",
+      price: "$45",
+      period: "per hour",
+      description: "Monday-Friday: 9AM-5PM",
+      features: ["Full bay access", "All courses available", "Practice facilities", "Smart lock access"],
+      highlight: false,
+      icon: Clock3,
+    },
+    {
+      name: "Peak Hours",
+      price: "$65",
+      period: "per hour",
+      description: "Evenings & Weekends",
+      features: ["Full bay access", "All courses available", "Practice facilities", "Smart lock access"],
+      highlight: true,
+      icon: Sun,
+    },
+  ];
+
+  const steps = [
+    {
+      icon: Calendar,
+      title: "Book Online",
+      description: "Select your preferred time slot and bay. Pay securely online with our integrated booking system.",
+    },
+    {
+      icon: Smartphone,
+      title: "Get Access Code",
+      description: "Receive your access code and arrive at your scheduled time. Our smart locks grant you secure entry.",
+    },
+    {
+      icon: Lock,
+      title: "Enter Facility",
+      description: "Use your code to unlock the door - no staff needed",
+    },
+    {
+      icon: Target,
+      title: "Start Playing",
+      description: "Step into your bay and start playing. Everything is set up and ready for your session.",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-white text-dark-gray overflow-x-hidden">
       {/* Navigation */}
@@ -53,8 +98,9 @@ const Index = () => {
             </div>
             <div className="hidden md:flex space-x-8">
               <a href="#home" className="text-dark-gray hover:text-bright-green transition-colors">Home</a>
-              <a href="#features" className="text-dark-gray hover:text-bright-green transition-colors">Features</a>
               <a href="#pricing" className="text-dark-gray hover:text-bright-green transition-colors">Pricing</a>
+              <a href="#how-it-works" className="text-dark-gray hover:text-bright-green transition-colors">How It Works</a>
+              <a href="#features" className="text-dark-gray hover:text-bright-green transition-colors">Features</a>
               <a href="#about" className="text-dark-gray hover:text-bright-green transition-colors">About</a>
             </div>
             <Button className="bg-bright-green hover:bg-deep-green text-white font-semibold btn-hover">
@@ -114,6 +160,89 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-12 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-wide text-dark-gray">
+              Simple, Transparent <span className="gradient-text">Pricing</span>
+            </h2>
+            <p className="text-xl text-medium-gray">Pay by the hour, no membership required.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto stagger-children">
+            {pricingTiers.map((tier, index) => (
+              <div key={tier.name} className="animate-scale-in">
+                <Card
+                  className={`h-full flex flex-col card-hover ${
+                    tier.highlight ? "border-bright-green bg-white shadow-xl" : "border-gray-200 bg-white shadow-lg"
+                  } hover:shadow-2xl transition-shadow duration-300`}
+                >
+                  {tier.highlight && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-bright-green text-white px-4 py-1 rounded-full text-sm font-semibold">
+                      POPULAR
+                    </div>
+                  )}
+                  <CardHeader className="items-center text-center">
+                    <div className="p-3 bg-mint rounded-full mb-3">
+                      <tier.icon className="h-8 w-8 text-bright-green" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold text-dark-gray">{tier.name}</CardTitle>
+                    <CardDescription className="text-medium-gray">{tier.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-grow">
+                    <div className="mb-6 text-center">
+                      <span className="text-4xl font-bold text-bright-green">{tier.price}</span>
+                      <span className="text-medium-gray ml-1">{tier.period}</span>
+                    </div>
+                    <ul className="space-y-3 mb-6 flex-grow">
+                      {tier.features.map((feature) => (
+                        <li key={feature} className="flex items-start">
+                          <Check className="h-5 w-5 text-bright-green mr-3 mt-1 flex-shrink-0" />
+                          <span className="text-medium-gray">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="how-it-works" className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-wide text-dark-gray">
+              How It <span className="gradient-text">Works</span>
+            </h2>
+            <p className="text-xl text-medium-gray">Get on the course in 4 simple steps</p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-8 stagger-children">
+            {steps.map((step, index) => (
+              <div
+                key={step.title}
+                className="text-center group p-6 rounded-lg hover:shadow-xl transition-shadow duration-300 bg-off-white card-hover"
+              >
+                <div className="mb-6 relative">
+                  <div className="w-20 h-20 mx-auto bg-gradient-to-br from-bright-green to-deep-green rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
+                    <step.icon className="h-10 w-10 text-white" />
+                  </div>
+                  {index < steps.length - 1 && (
+                    <div className="hidden md:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-bright-green to-transparent opacity-50" />
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-dark-gray">{step.title}</h3>
+                <p className="text-medium-gray">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section id="features" className="py-20 bg-white">
         <div className="container mx-auto px-6">
@@ -159,7 +288,7 @@ const Index = () => {
 
             <div className="bg-white p-8 rounded-lg border border-gray-100 hover:border-bright-green/50 transition-all duration-300 card-hover shadow-sm">
               <div className="w-16 h-16 bg-mint rounded-lg flex items-center justify-center mb-6">
-                <Clock className="w-8 h-8 text-bright-green" />
+                <Clock3 className="w-8 h-8 text-bright-green" />
               </div>
               <h3 className="text-xl font-bold text-dark-gray mb-4">24/7 Availability</h3>
               <p className="text-medium-gray">
@@ -170,97 +299,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 bg-off-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-dark-gray mb-6 animate-fade-in">
-              HOW IT <span className="gradient-text">WORKS</span>
-            </h2>
-            <p className="text-xl text-medium-gray max-w-3xl mx-auto animate-slide-up">
-              Getting started is simple. Book, arrive, and play.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto stagger-children">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-bright-green rounded-full flex items-center justify-center mx-auto mb-6 text-white font-bold text-2xl animate-scale-in">
-                1
-              </div>
-              <h3 className="text-2xl font-bold text-dark-gray mb-4">Book Online</h3>
-              <p className="text-medium-gray">
-                Select your preferred time slot and bay. Pay securely online with our integrated booking system.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-20 h-20 bg-bright-green rounded-full flex items-center justify-center mx-auto mb-6 text-white font-bold text-2xl animate-scale-in">
-                2
-              </div>
-              <h3 className="text-2xl font-bold text-dark-gray mb-4">Smart Access</h3>
-              <p className="text-medium-gray">
-                Receive your access code and arrive at your scheduled time. Our smart locks grant you secure entry.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-20 h-20 bg-bright-green rounded-full flex items-center justify-center mx-auto mb-6 text-white font-bold text-2xl animate-scale-in">
-                3
-              </div>
-              <h3 className="text-2xl font-bold text-dark-gray mb-4">Play & Enjoy</h3>
-              <p className="text-medium-gray">
-                Step into your bay and start playing. Everything is set up and ready for your session.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-dark-gray mb-6 animate-fade-in">
-              SIMPLE <span className="gradient-text">PRICING</span>
-            </h2>
-            <p className="text-xl text-medium-gray max-w-3xl mx-auto animate-slide-up">
-              Transparent hourly rates with peak and off-peak options.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto stagger-children">
-            <div className="bg-white p-8 rounded-lg border border-gray-100 shadow-sm card-hover">
-              <h3 className="text-2xl font-bold text-dark-gray mb-4">Off-Peak Hours</h3>
-              <div className="text-4xl font-bold text-bright-green mb-2">$45<span className="text-xl text-medium-gray">/hour</span></div>
-              <p className="text-medium-gray mb-6">Monday-Friday: 9AM-5PM</p>
-              <ul className="space-y-3 text-medium-gray">
-                <li className="flex items-center"><span className="w-2 h-2 bg-bright-green rounded-full mr-3"></span>Full bay access</li>
-                <li className="flex items-center"><span className="w-2 h-2 bg-bright-green rounded-full mr-3"></span>All courses available</li>
-                <li className="flex items-center"><span className="w-2 h-2 bg-bright-green rounded-full mr-3"></span>Practice facilities</li>
-                <li className="flex items-center"><span className="w-2 h-2 bg-bright-green rounded-full mr-3"></span>Smart lock access</li>
-              </ul>
-            </div>
-
-            <div className="bg-mint p-8 rounded-lg border-2 border-bright-green relative card-hover">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-bright-green text-white px-4 py-1 rounded-full text-sm font-semibold">
-                POPULAR
-              </div>
-              <h3 className="text-2xl font-bold text-dark-gray mb-4">Peak Hours</h3>
-              <div className="text-4xl font-bold text-bright-green mb-2">$65<span className="text-xl text-medium-gray">/hour</span></div>
-              <p className="text-medium-gray mb-6">Evenings & Weekends</p>
-              <ul className="space-y-3 text-medium-gray">
-                <li className="flex items-center"><span className="w-2 h-2 bg-bright-green rounded-full mr-3"></span>Full bay access</li>
-                <li className="flex items-center"><span className="w-2 h-2 bg-bright-green rounded-full mr-3"></span>All courses available</li>
-                <li className="flex items-center"><span className="w-2 h-2 bg-bright-green rounded-full mr-3"></span>Practice facilities</li>
-                <li className="flex items-center"><span className="w-2 h-2 bg-bright-green rounded-full mr-3"></span>Smart lock access</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Testimonials */}
-      <section className="py-20 bg-off-white">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-dark-gray mb-6 animate-fade-in">
@@ -304,7 +344,7 @@ const Index = () => {
                   <span>Cherry Hill, NJ 08034</span>
                 </div>
                 <div className="flex items-center text-medium-gray">
-                  <Clock className="w-6 h-6 text-bright-green mr-3" />
+                  <Clock3 className="w-6 h-6 text-bright-green mr-3" />
                   <span>Open 24/7 - Self-Service</span>
                 </div>
               </div>
@@ -348,8 +388,9 @@ const Index = () => {
               <h4 className="text-white font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-gray-400">
                 <li><a href="#home" className="hover:text-bright-green transition-colors">Home</a></li>
-                <li><a href="#features" className="hover:text-bright-green transition-colors">Features</a></li>
                 <li><a href="#pricing" className="hover:text-bright-green transition-colors">Pricing</a></li>
+                <li><a href="#how-it-works" className="hover:text-bright-green transition-colors">How It Works</a></li>
+                <li><a href="#features" className="hover:text-bright-green transition-colors">Features</a></li>
                 <li><a href="#about" className="hover:text-bright-green transition-colors">About</a></li>
               </ul>
             </div>
