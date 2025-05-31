@@ -5,51 +5,59 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 215 28% 17%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 215 28% 17%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 28% 17%;
-
-    --primary: 145 100% 50%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 215 28% 17%;
-
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 20% 42%;
-
-    --accent: 210 40% 96%;
-    --accent-foreground: 215 28% 17%;
-
-    --destructive: 0 62.8% 30.6%;
+    /* Light Theme (Default) */
+    --background: 0 0% 100%; /* White */
+    --foreground: 240 10% 3.9%; /* Dark Gray */
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 240 10% 3.9%; /* Dark Gray */
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 240 10% 3.9%; /* Dark Gray */
+    --primary: 158 100% 33%; /* #00A36C mapped to HSL */
+    --primary-foreground: 0 0% 100%; /* White */
+    --secondary: 240 4.8% 95.9%; /* Light Gray */
+    --secondary-foreground: 240 5.9% 10%; /* Dark Gray */
+    --muted: 240 4.8% 95.9%; /* Light Gray */
+    --muted-foreground: 240 3.8% 46.1%; /* Medium Gray */
+    --accent: 158 100% 33%; /* #00A36C mapped to HSL */
+    --accent-foreground: 0 0% 100%; /* White */
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 210 40% 96%;
-    --input: 210 40% 96%;
-    --ring: 145 100% 50%;
-
+    --border: 240 5.9% 90%; /* Light Gray Border */
+    --input: 240 5.9% 90%; /* Light Gray Input */
+    --ring: 158 100% 33%; /* #00A36C mapped to HSL */
     --radius: 0.5rem;
 
-    /* GolfLabs Brand Colors */
-    --bright-green: 145 100% 50%;
-    --deep-green: 145 100% 40%;
-    --forest-green: 145 100% 27%;
-    --mint: 145 100% 97%;
-    --charcoal: 215 28% 10%;
-
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 20% 42%;
-    --sidebar-primary: 145 100% 50%;
+    --sidebar-foreground: 240 3.8% 46.1%;
+    --sidebar-primary: 158 100% 33%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 215 28% 17%;
-    --sidebar-border: 210 40% 96%;
-    --sidebar-ring: 145 100% 50%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 10% 3.9%;
+    --sidebar-border: 240 5.9% 90%;
+    --sidebar-ring: 158 100% 33%;
+  }
+
+  .dark {
+    /* Dark Theme (Optional) */
+    --background: 240 10% 3.9%; /* Dark Gray */
+    --foreground: 0 0% 98%; /* Almost White */
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 158 100% 33%; /* #00A36C */
+    --primary-foreground: 0 0% 100%; /* White */
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 158 100% 33%; /* #00A36C */
+    --accent-foreground: 0 0% 100%; /* White */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 158 100% 33%; /* #00A36C */
   }
 }
 
@@ -57,181 +65,131 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    background: #FFFFFF;
-  }
-
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #FFFFFF;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--bright-green));
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--deep-green));
+    @apply font-sans; /* Ensuring a default font */
   }
 }
 
-@layer utilities {
-  /* GolfLabs Custom Colors */
-  .text-bright-green {
-    color: #00FF88;
-  }
+/* Custom scrollbar for light theme */
+::-webkit-scrollbar {
+  width: 10px;
+}
 
-  .bg-bright-green {
-    background-color: #00FF88;
-  }
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
 
-  .border-bright-green {
-    border-color: #00FF88;
-  }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 5px;
+}
 
-  .text-deep-green {
-    color: #00CC6A;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--secondary-foreground));
+}
 
-  .bg-deep-green {
-    background-color: #00CC6A;
-  }
+.dark ::-webkit-scrollbar-track {
+  background: #000;
+}
 
-  .text-forest-green {
-    color: #008A47;
-  }
+.dark ::-webkit-scrollbar-thumb {
+  background: #333;
+}
 
-  .bg-forest-green {
-    background-color: #008A47;
-  }
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
 
-  .bg-mint {
-    background-color: #F0FFF8;
-  }
+html {
+  scroll-behavior: smooth;
+}
 
-  .bg-off-white {
-    background-color: #FAFAFA;
-  }
+.fade-in-section {
+  will-change: transform, opacity;
+}
 
-  .text-medium-gray {
-    color: #6B7280;
-  }
+/* Enhanced Animations */
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
 
-  .text-dark-gray {
-    color: #1F2937;
-  }
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out forwards;
+}
 
-  .bg-charcoal {
-    background-color: #111827;
-  }
+.animate-scale-in {
+  animation: scaleIn 0.5s ease-out forwards;
+}
 
-  .hover\:bg-deep-green:hover {
-    background-color: #00CC6A;
-  }
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
 
-  .hover\:text-bright-green:hover {
-    color: #00FF88;
-  }
+.animate-bounce-slow {
+  animation: bounce 2s infinite;
+}
 
-  .hover\:border-bright-green:hover {
-    border-color: #00FF88;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  /* Enhanced Animations */
-  .animate-fade-in {
-    animation: fadeIn 0.8s ease-out forwards;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  .animate-slide-up {
-    animation: slideUp 0.6s ease-out forwards;
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
   }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
-  .animate-scale-in {
-    animation: scaleIn 0.5s ease-out forwards;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
   }
+  50% {
+    transform: translateY(-10px);
+  }
+}
 
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s ease;
+}
 
-  .animate-bounce-slow {
-    animation: bounce 2s infinite;
-  }
+.card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 50px rgba(0, 163, 108, 0.15);
+}
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+/* Button animations */
+.btn-hover {
+  transition: all 0.2s ease;
+}
 
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(50px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes scaleIn {
-    from {
-      opacity: 0;
-      transform: scale(0.9);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-
-  /* Card hover effects */
-  .card-hover {
-    transition: all 0.3s ease;
-  }
-
-  .card-hover:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 25px 50px rgba(0, 255, 136, 0.15);
-  }
-
-  /* Button animations */
-  .btn-hover {
-    transition: all 0.2s ease;
-  }
-
-  .btn-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 255, 136, 0.25);
-  }
+.btn-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 163, 108, 0.25);
 }
 
 /* Staggered animations for children */
@@ -249,7 +207,7 @@
 
 /* Gradient text effect */
 .gradient-text {
-  background: linear-gradient(135deg, #00FF88, #00CC6A);
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
