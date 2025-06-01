@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -302,20 +303,23 @@ const Index = () => {
             </h2>
           </div>
 
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-card p-8 rounded-lg border border-border text-center shadow-sm card-hover">
-              <div className="flex justify-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-6 h-6 text-primary fill-current" />
-                ))}
-              </div>
-              <p className="text-xl text-muted-foreground mb-6 italic">
-                "{testimonials[0].content}"
-              </p>
-              <div className="text-primary font-semibold text-lg">
-                {testimonials[0].name}
-              </div>
-            </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonialsData.map((testimonial, index) => (
+              <Card key={testimonial.name} className="h-full bg-card border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardContent className="p-6">
+                  <div className="flex mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="h-5 w-5 text-primary fill-current" />
+                    ))}
+                  </div>
+                  <p className="text-muted-foreground mb-4 italic">"{testimonial.content}"</p>
+                  <div>
+                    <p className="font-semibold text-foreground">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
