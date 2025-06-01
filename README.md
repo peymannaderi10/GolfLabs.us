@@ -1,8 +1,8 @@
-# Golf Simulator Hub - Public Website
+# GolfLabs - Public Website
 
 ## Business Overview
 
-Golf Simulator Hub is a 24/7 self-service golf simulator facility located in Cherryhill, New Jersey, serving the greater Philadelphia area. Our business model addresses a significant gap in the local market by providing:
+GolfLabs is a 24/7 self-service golf simulator facility located in Cherryhill, New Jersey, serving the greater Philadelphia area. Our business model addresses a significant gap in the local market by providing:
 
 - **24/7 Access**: Book and play anytime, day or night
 - **Affordable Pricing**: $35/hour with no membership requirements
@@ -49,7 +49,7 @@ This repository specifically contains:
 
 ## System Architecture Overview
 
-The complete Golf Simulator Hub system consists of three main components:
+The complete GolfLabs system consists of three main components:
 
 1. **Public Website** (this repo) - Marketing and information
 2. **Booking System** (private) - Real-time reservations and payments
@@ -82,4 +82,4 @@ npm run preview
 
 ---
 
-*Golf Simulator Hub - Redefining accessible golf simulation in the Philadelphia area*
+*GolfLabs - Redefining accessible golf simulation in the Philadelphia area*
