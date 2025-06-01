@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,7 @@ const Index = () => {
   const pricingTiers = [
     {
       name: "Off-Peak Hours",
-      price: "$45",
+      price: "$25",
       period: "per hour",
       description: "Monday-Friday: 9AM-5PM",
       features: ["Full bay access", "All courses available", "Practice facilities", "Smart lock access"],
@@ -49,7 +48,7 @@ const Index = () => {
     },
     {
       name: "Peak Hours",
-      price: "$65",
+      price: "$35",
       period: "per hour",
       description: "Evenings & Weekends",
       features: ["Full bay access", "All courses available", "Practice facilities", "Smart lock access"],
@@ -164,9 +163,8 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
             >
-              <span className="text-foreground">PREMIUM</span><br/>
-              <span className="text-primary">GOLF SIMULATION</span><br/>
-              <span className="text-foreground">24/7</span>
+              <span className="text-foreground">ELEVATE YOUR</span><br/>
+              <span className="text-primary">GOLF GAME</span>
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -174,8 +172,7 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed"
             >
-              Experience world-class golf simulation with Uneekor QED + GS Pro technology. 
-              8 premium bays available around the clock with smart lock access.
+              24/7 Self-Service Golf Simulators in Cherry Hill, NJ
             </motion.p>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
