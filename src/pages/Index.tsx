@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -406,7 +407,7 @@ const Index = () => {
                 variants={fadeInUp}
                 whileHover={{ y: -10, scale: 1.05 }}
                 transition={{ duration: 0.3 }}
-                className="bg-card p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_40px_rgba(0,163,108,0.5)]"
+                className="bg-card p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 shadow-[0_0_20px_rgba(0,163,108,0.3)] hover:shadow-[0_0_40px_rgba(0,163,108,0.5)]"
               >
                 <motion.div
                   whileHover={{ scale: 1.1, rotate: 5 }}
