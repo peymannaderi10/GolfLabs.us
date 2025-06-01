@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Calendar, Clock3, MapPin, Star, ChevronDown, Play, Users, Shield, Zap, Check, Lock, Smartphone, Target, Sun } from "lucide-react";
@@ -80,47 +81,108 @@ const Index = () => {
     },
   ];
 
+  // Animation variants
+  const fadeInUp = {
+    initial: { opacity: 0, y: 30 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6 }
+  };
+
+  const staggerContainer = {
+    animate: {
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const scaleIn = {
+    initial: { opacity: 0, scale: 0.9 },
+    animate: { opacity: 1, scale: 1 },
+    transition: { duration: 0.5 }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-background/95 backdrop-blur-md border-b border-border shadow-sm' : 'bg-background/80 backdrop-blur-sm'
-      }`}>
+      <motion.nav 
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+          isScrolled ? 'bg-background/95 backdrop-blur-md border-b border-border shadow-sm' : 'bg-background/80 backdrop-blur-sm'
+        }`}
+      >
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-foreground">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-2xl font-bold text-foreground"
+            >
               <span className="text-primary">GOLF</span><span className="text-foreground">LABS</span>
-            </div>
-            <div className="hidden md:flex space-x-8">
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="hidden md:flex space-x-8"
+            >
               <a href="#home" className="text-foreground hover:text-primary transition-colors">Home</a>
               <a href="#pricing" className="text-foreground hover:text-primary transition-colors">Pricing</a>
               <a href="#how-it-works" className="text-foreground hover:text-primary transition-colors">How It Works</a>
               <a href="#features" className="text-foreground hover:text-primary transition-colors">Features</a>
               <a href="#about" className="text-foreground hover:text-primary transition-colors">About</a>
-            </div>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold btn-hover">
-              Book Now
-            </Button>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold btn-hover">
+                Book Now
+              </Button>
+            </motion.div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Section */}
       <section id="home" className="relative min-h-screen flex items-center justify-center bg-background">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background opacity-60"></div>
         
         <div className="container mx-auto px-6 text-center relative z-10">
-          <div className="animate-fade-in">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <motion.h1 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
+            >
               <span className="text-foreground">PREMIUM</span><br/>
               <span className="text-primary">GOLF SIMULATION</span><br/>
               <span className="text-foreground">24/7</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed animate-slide-up">
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed"
+            >
               Experience world-class golf simulation with Uneekor QED + GS Pro technology. 
               8 premium bays available around the clock with smart lock access.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-scale-in">
+            </motion.p>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+            >
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-4 text-lg btn-hover">
                 <Calendar className="mr-2 h-5 w-5" />
                 Book Your Bay
@@ -129,59 +191,104 @@ const Index = () => {
                 <Play className="mr-2 h-5 w-5" />
                 Watch Demo
               </Button>
-            </div>
+            </motion.div>
             
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto stagger-children">
-              <div className="text-center animate-float">
-                <div className="text-4xl font-bold text-primary mb-2">8</div>
-                <div className="text-muted-foreground">Premium Bays</div>
-              </div>
-              <div className="text-center animate-float" style={{animationDelay: '1s'}}>
-                <div className="text-4xl font-bold text-primary mb-2">24/7</div>
-                <div className="text-muted-foreground">Access Available</div>
-              </div>
-              <div className="text-center animate-float" style={{animationDelay: '2s'}}>
-                <div className="text-4xl font-bold text-primary mb-2">100+</div>
-                <div className="text-muted-foreground">Golf Courses</div>
-              </div>
-            </div>
-          </div>
+            <motion.div 
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
+            >
+              {[
+                { number: "8", text: "Premium Bays" },
+                { number: "24/7", text: "Access Available" },
+                { number: "100+", text: "Golf Courses" }
+              ].map((stat, index) => (
+                <motion.div
+                  key={stat.text}
+                  variants={fadeInUp}
+                  whileHover={{ scale: 1.05 }}
+                  className="text-center"
+                >
+                  <div className="text-4xl font-bold text-primary mb-2">{stat.number}</div>
+                  <div className="text-muted-foreground">{stat.text}</div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
         </div>
         
         {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce-slow">
-          <ChevronDown className="w-8 h-8 text-primary" />
-        </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 1 }}
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <ChevronDown className="w-8 h-8 text-primary" />
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Pricing Section */}
       <section id="pricing" className="py-20 bg-background">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-12 animate-fade-in">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
             <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-wide text-foreground">
               Simple, Transparent <span className="text-primary">Pricing</span>
             </h2>
             <p className="text-xl text-muted-foreground">Pay by the hour, no membership required.</p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto stagger-children">
+          <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto"
+          >
             {pricingTiers.map((tier, index) => (
-              <div key={tier.name} className="animate-scale-in">
+              <motion.div
+                key={tier.name}
+                variants={scaleIn}
+                whileHover={{ y: -10, scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+                className="relative"
+              >
                 <Card
-                  className={`h-full flex flex-col card-hover ${
+                  className={`h-full flex flex-col ${
                     tier.highlight ? "border-primary bg-card shadow-xl" : "border-border bg-card shadow-lg"
                   } hover:shadow-2xl transition-shadow duration-300`}
                 >
                   {tier.highlight && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.5, type: "spring" }}
+                      className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold"
+                    >
                       POPULAR
-                    </div>
+                    </motion.div>
                   )}
                   <CardHeader className="items-center text-center">
-                    <div className="p-3 bg-primary/10 rounded-full mb-3">
+                    <motion.div
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.5 }}
+                      className="p-3 bg-primary/10 rounded-full mb-3"
+                    >
                       <tier.icon className="h-8 w-8 text-primary" />
-                    </div>
+                    </motion.div>
                     <CardTitle className="text-2xl font-bold text-card-foreground">{tier.name}</CardTitle>
                     <CardDescription className="text-muted-foreground">{tier.description}</CardDescription>
                   </CardHeader>
@@ -191,136 +298,183 @@ const Index = () => {
                       <span className="text-muted-foreground ml-1">{tier.period}</span>
                     </div>
                     <ul className="space-y-3 mb-6 flex-grow">
-                      {tier.features.map((feature) => (
-                        <li key={feature} className="flex items-start">
+                      {tier.features.map((feature, featureIndex) => (
+                        <motion.li
+                          key={feature}
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          transition={{ delay: featureIndex * 0.1 }}
+                          viewport={{ once: true }}
+                          className="flex items-start"
+                        >
                           <Check className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
                           <span className="text-muted-foreground">{feature}</span>
-                        </li>
+                        </motion.li>
                       ))}
                     </ul>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* How It Works */}
       <section id="how-it-works" className="py-20 bg-background">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16 animate-fade-in">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
             <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-wide text-foreground">
               How It <span className="text-primary">Works</span>
             </h2>
             <p className="text-xl text-muted-foreground">Get on the course in 4 simple steps</p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-4 gap-8 stagger-children">
+          <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-4 gap-8"
+          >
             {steps.map((step, index) => (
-              <div
+              <motion.div
                 key={step.title}
-                className="text-center group p-6 rounded-lg hover:shadow-xl transition-shadow duration-300 bg-muted/30 card-hover"
+                variants={fadeInUp}
+                whileHover={{ y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="text-center group p-6 rounded-lg hover:shadow-xl transition-shadow duration-300 bg-muted/30"
               >
                 <div className="mb-6 relative">
-                  <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                    className="w-20 h-20 mx-auto bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center shadow-md"
+                  >
                     <step.icon className="h-10 w-10 text-primary-foreground" />
-                  </div>
+                  </motion.div>
                   {index < steps.length - 1 && (
                     <div className="hidden md:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-primary to-transparent opacity-50" />
                   )}
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-foreground">{step.title}</h3>
                 <p className="text-muted-foreground">{step.description}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
       <section id="features" className="py-20 bg-background">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 animate-fade-in">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
               STATE-OF-THE-ART <span className="text-primary">TECHNOLOGY</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto animate-slide-up">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Experience the future of golf with our cutting-edge simulator technology and seamless automation.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 stagger-children">
-            <div className="bg-card p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 card-hover shadow-sm">
-              <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <Zap className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-card-foreground mb-4">Uneekor QED</h3>
-              <p className="text-muted-foreground">
-                Professional-grade launch monitors with unparalleled accuracy and ball tracking technology.
-              </p>
-            </div>
-
-            <div className="bg-card p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 card-hover shadow-sm">
-              <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <Shield className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-card-foreground mb-4">Smart Lock Access</h3>
-              <p className="text-muted-foreground">
-                Secure, automated bay access through our smart lock system. No staff required.
-              </p>
-            </div>
-
-            <div className="bg-card p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 card-hover shadow-sm">
-              <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <Users className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-card-foreground mb-4">GS Pro Integration</h3>
-              <p className="text-muted-foreground">
-                Play on 100+ world-famous golf courses with stunning graphics and realistic physics.
-              </p>
-            </div>
-
-            <div className="bg-card p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 card-hover shadow-sm">
-              <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <Clock3 className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-card-foreground mb-4">24/7 Availability</h3>
-              <p className="text-muted-foreground">
-                Practice and play whenever it suits you. Our facility never closes.
-              </p>
-            </div>
-          </div>
+          <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
+          >
+            {[
+              { icon: Zap, title: "Uneekor QED", description: "Professional-grade launch monitors with unparalleled accuracy and ball tracking technology." },
+              { icon: Shield, title: "Smart Lock Access", description: "Secure, automated bay access through our smart lock system. No staff required." },
+              { icon: Users, title: "GS Pro Integration", description: "Play on 100+ world-famous golf courses with stunning graphics and realistic physics." },
+              { icon: Clock3, title: "24/7 Availability", description: "Practice and play whenever it suits you. Our facility never closes." }
+            ].map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                variants={fadeInUp}
+                whileHover={{ y: -10, scale: 1.05 }}
+                transition={{ duration: 0.3 }}
+                className="bg-card p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 shadow-sm"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-6"
+                >
+                  <feature.icon className="w-8 h-8 text-primary" />
+                </motion.div>
+                <h3 className="text-xl font-bold text-card-foreground mb-4">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
       {/* Testimonials */}
       <section className="py-20 bg-background">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 animate-fade-in">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
               WHAT GOLFERS <span className="text-primary">SAY</span>
             </h2>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-3 gap-8"
+          >
             {testimonialsData.map((testimonial, index) => (
-              <Card key={testimonial.name} className="h-full bg-card border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardContent className="p-6">
-                  <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-primary fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground mb-4 italic">"{testimonial.content}"</p>
-                  <div>
-                    <p className="font-semibold text-foreground">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={testimonial.name}
+                variants={fadeInUp}
+                whileHover={{ y: -10, scale: 1.05 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="h-full bg-card border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardContent className="p-6">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
+                      viewport={{ once: true }}
+                      className="flex mb-4"
+                    >
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 text-primary fill-current" />
+                      ))}
+                    </motion.div>
+                    <p className="text-muted-foreground mb-4 italic">"{testimonial.content}"</p>
+                    <div>
+                      <p className="font-semibold text-foreground">{testimonial.name}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -328,7 +482,12 @@ const Index = () => {
       <section id="about" className="py-20 bg-background">
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="animate-fade-in">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
               <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
                 VISIT US IN <span className="text-primary">CHERRY HILL</span>
               </h2>
@@ -337,52 +496,115 @@ const Index = () => {
                 with ample parking available.
               </p>
               <div className="space-y-4">
-                <div className="flex items-center text-muted-foreground">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  viewport={{ once: true }}
+                  className="flex items-center text-muted-foreground"
+                >
                   <MapPin className="w-6 h-6 text-primary mr-3" />
                   <span>Cherry Hill, NJ 08034</span>
-                </div>
-                <div className="flex items-center text-muted-foreground">
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  viewport={{ once: true }}
+                  className="flex items-center text-muted-foreground"
+                >
                   <Clock3 className="w-6 h-6 text-primary mr-3" />
                   <span>Open 24/7 - Self-Service</span>
-                </div>
+                </motion.div>
               </div>
-            </div>
-            <div className="bg-primary/5 h-64 rounded-lg flex items-center justify-center border border-border animate-scale-in">
-              <MapPin className="w-16 h-16 text-primary" />
-            </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.05 }}
+              className="bg-primary/5 h-64 rounded-lg flex items-center justify-center border border-border"
+            >
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <MapPin className="w-16 h-16 text-primary" />
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary via-primary/90 to-primary">
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+        className="py-20 bg-gradient-to-r from-primary via-primary/90 to-primary"
+      >
         <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-6 animate-fade-in">
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-bold text-primary-foreground mb-6"
+          >
             READY TO PLAY?
-          </h2>
-          <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto animate-slide-up">
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto"
+          >
             Book your bay now and experience the future of golf simulation.
-          </p>
-          <Button size="lg" className="bg-background hover:bg-background/90 text-foreground font-semibold px-12 py-4 text-lg btn-hover animate-scale-in">
-            <Calendar className="mr-2 h-6 w-6" />
-            Book Your Session
-          </Button>
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            viewport={{ once: true }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button size="lg" className="bg-background hover:bg-background/90 text-foreground font-semibold px-12 py-4 text-lg">
+              <Calendar className="mr-2 h-6 w-6" />
+              Book Your Session
+            </Button>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
-      <footer className="bg-foreground py-12">
+      <motion.footer
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+        className="bg-foreground py-12"
+      >
         <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
+          <motion.div
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-4 gap-8"
+          >
+            <motion.div variants={fadeInUp}>
               <div className="text-2xl font-bold text-background mb-4">
                 <span className="text-primary">GOLF</span>LABS
               </div>
               <p className="text-muted">
                 Premium golf simulation experience with 24/7 access and cutting-edge technology.
               </p>
-            </div>
-            <div>
+            </motion.div>
+            <motion.div variants={fadeInUp}>
               <h4 className="text-background font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-muted">
                 <li><a href="#home" className="hover:text-primary transition-colors">Home</a></li>
@@ -391,8 +613,8 @@ const Index = () => {
                 <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
                 <li><a href="#about" className="hover:text-primary transition-colors">About</a></li>
               </ul>
-            </div>
-            <div>
+            </motion.div>
+            <motion.div variants={fadeInUp}>
               <h4 className="text-background font-semibold mb-4">Services</h4>
               <ul className="space-y-2 text-muted">
                 <li>Golf Simulation</li>
@@ -400,21 +622,27 @@ const Index = () => {
                 <li>Course Play</li>
                 <li>24/7 Access</li>
               </ul>
-            </div>
-            <div>
+            </motion.div>
+            <motion.div variants={fadeInUp}>
               <h4 className="text-background font-semibold mb-4">Contact</h4>
               <ul className="space-y-2 text-muted">
                 <li>Cherry Hill, NJ</li>
                 <li>Available 24/7</li>
                 <li>Self-Service</li>
               </ul>
-            </div>
-          </div>
-          <div className="border-t border-muted/20 mt-8 pt-8 text-center text-muted">
+            </motion.div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            viewport={{ once: true }}
+            className="border-t border-muted/20 mt-8 pt-8 text-center text-muted"
+          >
             <p>&copy; 2024 GolfLabs. All rights reserved.</p>
-          </div>
+          </motion.div>
         </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 };
