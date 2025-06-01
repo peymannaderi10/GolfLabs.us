@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -6,7 +5,6 @@ import { Calendar, Clock3, MapPin, Star, ChevronDown, Play, Users, Shield, Zap, 
 
 const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,30 +14,26 @@ const Index = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const testimonials = [
+  const testimonialsData = [
     {
-      name: "Michael Chen",
-      text: "Incredible technology and convenience. The 24/7 access is perfect for my schedule.",
-      rating: 5
+      name: "Mike Johnson",
+      role: "Weekend Warrior",
+      content: "The 24/7 access is a game changer. I can practice after work without rushing.",
+      rating: 5,
     },
     {
-      name: "Sarah Johnson", 
-      text: "Best golf simulator experience in South Jersey. The Uneekor systems are top-notch.",
-      rating: 5
+      name: "Sarah Chen",
+      role: "Golf Enthusiast",
+      content: "Best simulators in the area. The Uneekor system is incredibly accurate.",
+      rating: 5,
     },
     {
-      name: "David Rodriguez",
-      text: "Game-changing facility. Love the seamless booking and smart lock access.",
-      rating: 5
-    }
+      name: "Tom Williams",
+      role: "Local Pro",
+      content: "I use this for off-season training. The data and analytics are top-notch.",
+      rating: 5,
+    },
   ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
   const pricingTiers = [
     {
@@ -316,10 +310,10 @@ const Index = () => {
                 ))}
               </div>
               <p className="text-xl text-muted-foreground mb-6 italic">
-                "{testimonials[currentTestimonial].text}"
+                "{testimonials[0].content}"
               </p>
               <div className="text-primary font-semibold text-lg">
-                {testimonials[currentTestimonial].name}
+                {testimonials[0].name}
               </div>
             </div>
           </div>
