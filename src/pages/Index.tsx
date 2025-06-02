@@ -148,8 +148,11 @@ const Index = () => {
       </motion.nav>
 
       {/* Hero Section */}
-      <section id="home" className="relative min-h-screen flex items-center justify-center bg-background">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background opacity-60"></div>
+      <section id="home" className="relative min-h-screen flex items-center justify-center bg-background bg-[url('/images/mobileHero.png')] md:bg-[url('/images/heroBanner.png')] bg-cover bg-center">
+        {/* Top fade effect for mobile */}
+        <div className="absolute top-0 left-0 right-0 h-3/4 bg-gradient-to-b from-background via-background/80 to-transparent md:hidden"></div>
+        {/* Bottom fade effect */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent"></div>
         
         <div className="container mx-auto px-6 text-center relative z-10">
           <motion.div
