@@ -100,10 +100,6 @@
   background: hsl(var(--primary) / 0.8);
 }
 
-html, body {
-  background: #fff !important;
-}
-
 html {
   scroll-behavior: smooth;
 }
