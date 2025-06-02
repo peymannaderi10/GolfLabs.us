@@ -64,11 +64,8 @@
   * {
     @apply border-border;
   }
-  html {
-    @apply bg-white;
-  }
   body {
-    @apply bg-white text-foreground;
+    @apply bg-background text-foreground;
     @apply font-sans; /* Ensuring a default font */
   }
 }
@@ -101,6 +98,10 @@
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.8);
+}
+
+html, body {
+  background: #fff !important;
 }
 
 html {
