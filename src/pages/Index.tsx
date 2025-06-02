@@ -326,8 +326,8 @@ const Index = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            viewport={{ once: true, margin: "-100px" }}
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-wide text-foreground">
@@ -337,19 +337,35 @@ const Index = () => {
           </motion.div>
 
           <motion.div 
-            variants={staggerContainer}
+            variants={{
+              animate: {
+                transition: {
+                  staggerChildren: 0.2
+                }
+              }
+            }}
             initial="initial"
             whileInView="animate"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
             className="grid md:grid-cols-4 gap-8"
           >
             {steps.map((step, index) => (
               <motion.div
                 key={step.title}
-                variants={fadeInUp}
+                variants={{
+                  initial: { opacity: 0, y: 30 },
+                  animate: { 
+                    opacity: 1, 
+                    y: 0,
+                    transition: { 
+                      duration: 0.6,
+                      delay: typeof window !== 'undefined' && window.innerWidth < 768 ? 0.5 + (index * 0.3) : 0.2 + (index * 0.2)
+                    } 
+                  }
+                }}
                 whileHover={{ y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="text-center group p-6 rounded-lg hover:shadow-xl transition-shadow duration-300 bg-muted/30"
+                className="text-center group p-6 rounded-lg shadow-xl transition-shadow duration-300 bg-muted/30"
               >
                 <div className="mb-6 relative">
                   <motion.div
@@ -377,8 +393,8 @@ const Index = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            viewport={{ once: true, margin: "-100px" }}
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
@@ -390,10 +406,16 @@ const Index = () => {
           </motion.div>
 
           <motion.div 
-            variants={staggerContainer}
+            variants={{
+              animate: {
+                transition: {
+                  staggerChildren: 0.2
+                }
+              }
+            }}
             initial="initial"
             whileInView="animate"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
             className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
           >
             {[
@@ -404,7 +426,17 @@ const Index = () => {
             ].map((feature, index) => (
               <motion.div
                 key={feature.title}
-                variants={fadeInUp}
+                variants={{
+                  initial: { opacity: 0, y: 30 },
+                  animate: { 
+                    opacity: 1, 
+                    y: 0,
+                    transition: { 
+                      duration: 0.6,
+                      delay: typeof window !== 'undefined' && window.innerWidth < 768 ? 0.5 + (index * 0.3) : 0.2 + (index * 0.2)
+                    } 
+                  }
+                }}
                 whileHover={{ y: -10, scale: 1.05 }}
                 transition={{ duration: 0.3 }}
                 className="bg-card p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 shadow-[0_0_20px_rgba(0,163,108,0.3)] hover:shadow-[0_0_40px_rgba(0,163,108,0.5)]"
