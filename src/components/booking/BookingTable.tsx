@@ -125,15 +125,15 @@ export const BookingTable: React.FC<BookingTableProps> = ({
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-white">
+    <div className="border rounded-lg overflow-auto bg-white max-w-full">
       <Table>
         <TableHeader className="bg-gray-50">
           <TableRow className="border-b-2">
-            <TableHead className="w-24 font-bold text-gray-700 text-center border-r-2 border-gray-200 bg-gray-100 sticky left-0 z-10 py-4">
+            <TableHead className="w-16 font-bold text-gray-700 text-center border-r-2 border-gray-200 bg-gray-100 sticky left-0 z-10 py-2">
               Time
             </TableHead>
             {bays.map(bay => (
-              <TableHead key={bay} className="font-bold text-gray-700 text-center border-r border-gray-200 min-w-[120px] py-4">
+              <TableHead key={bay} className="font-bold text-gray-700 text-center border-r border-gray-200 min-w-[80px] py-2">
                 Bay {bay}
               </TableHead>
             ))}
@@ -146,12 +146,12 @@ export const BookingTable: React.FC<BookingTableProps> = ({
             return (
               <TableRow 
                 key={timeSlot} 
-                className="border-b border-gray-100 h-12"
-                style={{ height: '48px' }}
+                className="border-b border-gray-100"
+                style={{ height: '16px' }}
               >
-                <TableCell className={`font-medium text-xs border-r-2 border-gray-200 bg-gray-50 sticky left-0 z-10 text-center ${
+                <TableCell className={`font-medium text-xs border-r-2 border-gray-200 bg-gray-50 sticky left-0 z-10 text-center py-0.5 ${
                   isHourMark ? 'text-gray-700 font-semibold' : 'text-gray-400'
-                }`}>
+                }`} style={{ height: '16px' }}>
                   {isHourMark ? timeSlot : format(parse(timeSlot, 'h:mm a', selectedDate), 'h:mm')}
                 </TableCell>
                 {bays.map(bay => {
@@ -169,40 +169,40 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                   return (
                     <TableCell 
                       key={bay} 
-                      className="p-0 border-r border-gray-100 relative h-12"
-                      style={{ height: '48px' }}
+                      className="p-0 border-r border-gray-100 relative"
+                      style={{ height: '16px', minHeight: '16px' }}
                       rowSpan={blocked && bookingStart ? bookingSpan : 1}
                     >
                       {blocked && bookingStart ? (
                         <div 
                           className="bg-gray-200 border border-gray-300 rounded-sm m-0.5 flex items-center justify-center text-xs text-gray-700 font-medium relative"
                           style={{
-                            height: `${bookingSpan * 48 - 4}px`,
-                            minHeight: '44px'
+                            height: `${bookingSpan * 16 - 4}px`,
+                            minHeight: '12px'
                           }}
                         >
-                          <div className="text-center px-2">
+                          <div className="text-center px-1">
                             <div className="font-semibold text-xs">{booking?.startTime}—{booking?.endTime}</div>
                           </div>
                         </div>
                       ) : !blocked ? (
-                        <div className="relative h-full group">
+                        <div className="relative h-full group" style={{ height: '16px' }}>
                           <Button
                             variant={selected ? "default" : "ghost"}
                             size="sm"
-                            className={`w-full h-full text-xs border-0 rounded-none ${
+                            className={`w-full h-full text-xs border-0 rounded-none p-0 ${
                               selected
                                 ? 'bg-primary text-primary-foreground'
                                 : 'hover:bg-green-50 hover:text-green-700 text-transparent group-hover:text-green-700'
                             }`}
                             onClick={() => onSlotSelect(bay, timeSlot)}
-                            style={{ height: '48px' }}
+                            style={{ height: '16px', minHeight: '16px' }}
                           >
                             {selected ? '✓' : ''}
-                            <Plus className={`h-3 w-3 ${selected ? 'inline' : 'hidden group-hover:inline'}`} />
+                            <Plus className={`h-2 w-2 ${selected ? 'inline' : 'hidden group-hover:inline'}`} />
                           </Button>
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-xs text-green-700 font-medium bg-white px-1 rounded shadow-sm">
+                          <div className="absolute left-0 top-0 h-full flex items-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity pl-4">
+                            <span className="text-xs text-green-700 font-medium bg-white px-1 rounded shadow-sm whitespace-nowrap">
                               {timeSlot}
                             </span>
                           </div>
