@@ -17,7 +17,7 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i));
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+    <div className="space-y-3">
       {days.map((day, index) => {
         const isSelected = selectedDate && isSameDay(day, selectedDate);
         const isToday = isSameDay(day, today);
@@ -32,21 +32,25 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
             }`}
             onClick={() => onDateSelect(day)}
           >
-            <div className="text-center">
-              <div className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
-                {format(day, 'EEE')}
+            <div className="flex items-center justify-between">
+              <div>
+                <div className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
+                  {format(day, 'EEEE')}
+                </div>
+                <div className={`text-lg font-bold ${
+                  isSelected ? 'text-primary' : isToday ? 'text-primary' : 'text-foreground'
+                }`}>
+                  {format(day, 'MMMM d, yyyy')}
+                </div>
+                {isToday && (
+                  <div className="text-xs text-primary font-medium">Today</div>
+                )}
               </div>
-              <div className={`text-2xl font-bold mt-1 ${
-                isSelected ? 'text-primary' : isToday ? 'text-primary' : 'text-foreground'
+              <div className={`text-2xl font-bold ${
+                isSelected ? 'text-primary' : isToday ? 'text-primary' : 'text-muted-foreground'
               }`}>
                 {format(day, 'd')}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {format(day, 'MMM')}
-              </div>
-              {isToday && (
-                <div className="text-xs text-primary font-medium mt-1">Today</div>
-              )}
             </div>
           </Card>
         );

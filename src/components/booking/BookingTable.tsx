@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { format, addMinutes, startOfDay, parse, isWithinInterval } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 interface BookingTableProps {
   selectedDate: Date | null;
@@ -122,19 +124,16 @@ export const BookingTable: React.FC<BookingTableProps> = ({
     return selectedBay === bay && selectedTimeSlot === timeSlot;
   };
 
-  // Filter time slots to show only hourly slots for cleaner view
-  const displayTimeSlots = timeSlots.filter((_, index) => index % 4 === 0); // Show every hour
-
   return (
     <div className="border rounded-lg overflow-hidden bg-white">
       <Table>
         <TableHeader className="bg-gray-50">
           <TableRow className="border-b-2">
-            <TableHead className="w-20 font-bold text-gray-700 text-center border-r-2 border-gray-200 bg-gray-100 sticky left-0 z-10">
+            <TableHead className="w-24 font-bold text-gray-700 text-center border-r-2 border-gray-200 bg-gray-100 sticky left-0 z-10 py-4">
               Time
             </TableHead>
             {bays.map(bay => (
-              <TableHead key={bay} className="font-bold text-gray-700 text-center border-r border-gray-200 min-w-[140px]">
+              <TableHead key={bay} className="font-bold text-gray-700 text-center border-r border-gray-200 min-w-[120px] py-4">
                 Bay {bay}
               </TableHead>
             ))}
@@ -142,17 +141,18 @@ export const BookingTable: React.FC<BookingTableProps> = ({
         </TableHeader>
         <TableBody>
           {timeSlots.map((timeSlot, timeIndex) => {
-            // Only show rows for full hours for cleaner look, but keep all slots for booking logic
-            const isHourMark = timeIndex % 4 === 0;
+            const isHourMark = timeIndex % 4 === 0; // Every 4th slot (every hour)
             
             return (
               <TableRow 
                 key={timeSlot} 
-                className={`border-b border-gray-100 ${isHourMark ? 'h-16' : 'h-4'} ${isHourMark ? '' : 'border-opacity-50'}`}
-                style={{ height: isHourMark ? '64px' : '16px' }}
+                className="border-b border-gray-100 h-12"
+                style={{ height: '48px' }}
               >
-                <TableCell className={`font-medium text-xs border-r-2 border-gray-200 bg-gray-50 sticky left-0 z-10 ${isHourMark ? 'text-gray-700' : 'text-gray-400 text-center'}`}>
-                  {isHourMark ? timeSlot : ''}
+                <TableCell className={`font-medium text-xs border-r-2 border-gray-200 bg-gray-50 sticky left-0 z-10 text-center ${
+                  isHourMark ? 'text-gray-700 font-semibold' : 'text-gray-400'
+                }`}>
+                  {isHourMark ? timeSlot : format(parse(timeSlot, 'h:mm a', selectedDate), 'h:mm')}
                 </TableCell>
                 {bays.map(bay => {
                   const blocked = isSlotBlocked(bay, timeSlot);
@@ -167,33 +167,46 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                   }
                   
                   return (
-                    <TableCell key={bay} className="p-0 border-r border-gray-100 relative">
+                    <TableCell 
+                      key={bay} 
+                      className="p-0 border-r border-gray-100 relative h-12"
+                      style={{ height: '48px' }}
+                      rowSpan={blocked && bookingStart ? bookingSpan : 1}
+                    >
                       {blocked && bookingStart ? (
                         <div 
-                          className="bg-blue-100 border border-blue-200 rounded-sm m-1 flex items-center justify-center text-xs text-blue-800 font-medium shadow-sm"
+                          className="bg-gray-200 border border-gray-300 rounded-sm m-0.5 flex items-center justify-center text-xs text-gray-700 font-medium relative"
                           style={{
-                            height: `${bookingSpan * (isHourMark ? 64 : 16) - 8}px`,
-                            minHeight: '40px'
+                            height: `${bookingSpan * 48 - 4}px`,
+                            minHeight: '44px'
                           }}
                         >
                           <div className="text-center px-2">
-                            <div className="font-semibold">{booking?.startTime}—{booking?.endTime}</div>
+                            <div className="font-semibold text-xs">{booking?.startTime}—{booking?.endTime}</div>
                           </div>
                         </div>
                       ) : !blocked ? (
-                        <Button
-                          variant={selected ? "default" : "ghost"}
-                          size="sm"
-                          className={`w-full h-full text-xs border-0 rounded-none ${
-                            selected
-                              ? 'bg-primary text-primary-foreground'
-                              : 'hover:bg-green-50 hover:text-green-700 text-transparent hover:text-green-700'
-                          }`}
-                          onClick={() => onSlotSelect(bay, timeSlot)}
-                          style={{ height: isHourMark ? '64px' : '16px' }}
-                        >
-                          {selected ? '✓' : isHourMark ? '+' : ''}
-                        </Button>
+                        <div className="relative h-full group">
+                          <Button
+                            variant={selected ? "default" : "ghost"}
+                            size="sm"
+                            className={`w-full h-full text-xs border-0 rounded-none ${
+                              selected
+                                ? 'bg-primary text-primary-foreground'
+                                : 'hover:bg-green-50 hover:text-green-700 text-transparent group-hover:text-green-700'
+                            }`}
+                            onClick={() => onSlotSelect(bay, timeSlot)}
+                            style={{ height: '48px' }}
+                          >
+                            {selected ? '✓' : ''}
+                            <Plus className={`h-3 w-3 ${selected ? 'inline' : 'hidden group-hover:inline'}`} />
+                          </Button>
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-xs text-green-700 font-medium bg-white px-1 rounded shadow-sm">
+                              {timeSlot}
+                            </span>
+                          </div>
+                        </div>
                       ) : null}
                     </TableCell>
                   );
