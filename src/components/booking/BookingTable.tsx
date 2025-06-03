@@ -8,6 +8,7 @@ interface BookingTableProps {
   selectedDate: Date | null;
   selectedBay: number | null;
   selectedTimeSlot: string | null;
+  selectedDuration: number;
   onSlotSelect: (bay: number, timeSlot: string) => void;
 }
 
@@ -26,6 +27,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
   selectedDate,
   selectedBay,
   selectedTimeSlot,
+  selectedDuration,
   onSlotSelect
 }) => {
   if (!selectedDate) {
@@ -123,6 +125,38 @@ export const BookingTable: React.FC<BookingTableProps> = ({
     return selectedBay === bay && selectedTimeSlot === timeSlot;
   };
 
+  // Calculate how many 15-minute slots the duration spans
+  const getDurationSlots = () => {
+    return Math.ceil(selectedDuration / 15);
+  };
+
+  // Get time slots that would be included in a booking starting at the given slot
+  const getTimeSlotRange = (startSlot: string) => {
+    const slotIndex = timeSlots.findIndex(slot => slot === startSlot);
+    if (slotIndex === -1) return [];
+    
+    const slots = [];
+    const durationSlots = getDurationSlots();
+    
+    for (let i = 0; i < durationSlots && slotIndex + i < timeSlots.length; i++) {
+      slots.push(timeSlots[slotIndex + i]);
+    }
+    
+    return slots;
+  };
+
+  // Check if a slot is part of the hover preview range
+  const isInHoverRange = (bay: number, timeSlot: string, hoverBay: number | null, hoverSlot: string | null) => {
+    if (!hoverBay || !hoverSlot || bay !== hoverBay) return false;
+    
+    const range = getTimeSlotRange(hoverSlot);
+    return range.includes(timeSlot);
+  };
+
+  // State to track which slot is being hovered
+  const [hoverBay, setHoverBay] = React.useState<number | null>(null);
+  const [hoverSlot, setHoverSlot] = React.useState<string | null>(null);
+
   return (
     <div className="border rounded-lg overflow-auto bg-white max-w-full">
       <Table>
@@ -146,11 +180,11 @@ export const BookingTable: React.FC<BookingTableProps> = ({
               <TableRow 
                 key={timeSlot} 
                 className="transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-gray-100"
-                style={{ height: '16px' }}
+                style={{ height: '16px', borderCollapse: 'collapse' }}
               >
                 <TableCell className={`font-medium text-xs border-r-2 border-gray-200 bg-gray-50 sticky left-0 z-10 text-center py-0.5 ${
                   isHourMark ? 'text-gray-700 font-semibold' : 'text-gray-400'
-                }`} style={{ height: '16px' }}>
+                }`} style={{ height: '16px', padding: '0' }}>
                   {isHourMark ? timeSlot : format(parse(timeSlot, 'h:mm a', selectedDate), 'h:mm')}
                 </TableCell>
                 {bays.map(bay => {
@@ -169,16 +203,29 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                     <TableCell 
                       key={bay} 
                       className="p-0 border-r border-gray-100 relative"
-                      style={{ height: '16px', minHeight: '16px' }}
+                      style={{ 
+                        height: '16px', 
+                        minHeight: '16px', 
+                        padding: '0', 
+                        borderCollapse: 'collapse',
+                        overflow: 'hidden'
+                      }}
                       rowSpan={blocked && bookingStart ? bookingSpan : 1}
                     >
                       {blocked && bookingStart ? (
                         <div 
-                          className="bg-gray-200 border border-gray-300 flex items-center justify-center text-xs text-gray-700 font-medium relative"
+                          className="bg-gray-200 flex items-center justify-center text-xs text-gray-700 font-medium absolute inset-0"
                           style={{
                             height: `${bookingSpan * 16}px`,
-                            minHeight: '16px',
-                            width: '100%'
+                            width: '100%',
+                            margin: '0',
+                            padding: '0',
+                            border: 'none',
+                            borderRadius: '0',
+                            top: '0',
+                            left: '0',
+                            right: '0',
+                            bottom: '0'
                           }}
                         >
                           <div className="text-center px-1">
@@ -186,20 +233,40 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                           </div>
                         </div>
                       ) : !blocked ? (
-                        <div className="relative h-full group" style={{ height: '16px' }}>
+                        <div 
+                          className={`absolute inset-0 ${
+                            isInHoverRange(bay, timeSlot, hoverBay, hoverSlot) && !selected 
+                              ? 'bg-green-50/70' 
+                              : ''
+                          }`} 
+                          style={{ margin: '0', padding: '0' }}
+                          onMouseEnter={() => {
+                            setHoverBay(bay);
+                            setHoverSlot(timeSlot);
+                          }}
+                          onMouseLeave={() => {
+                            setHoverBay(null);
+                            setHoverSlot(null);
+                          }}
+                        >
                           <Button
                             variant={selected ? "default" : "ghost"}
                             size="sm"
-                            className={`w-full h-full text-xs border-0 rounded-none p-0 ${
+                            className={`absolute inset-0 text-xs border-0 rounded-none ${
                               selected
                                 ? 'bg-primary text-primary-foreground'
                                 : 'hover:bg-green-50 hover:text-green-700 text-transparent group-hover:text-green-700'
                             }`}
                             onClick={() => onSlotSelect(bay, timeSlot)}
-                            style={{ height: '16px', minHeight: '16px', width: '100%' }}
+                            style={{ 
+                              margin: '0',
+                              padding: '0',
+                              borderRadius: '0',
+                              border: 'none'
+                            }}
                           >
                             {selected ? '✓' : ''}
-                            <Plus className={`h-2 w-2 ${selected ? 'inline' : 'hidden group-hover:inline'}`} />
+                            {!selected && <Plus className="h-2 w-2 hidden group-hover:inline" />}
                           </Button>
                           <div className="absolute left-0 top-0 h-full flex items-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity pl-4">
                             <span className="text-xs text-green-700 font-medium bg-white px-1 rounded shadow-sm whitespace-nowrap">
