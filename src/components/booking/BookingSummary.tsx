@@ -1,18 +1,20 @@
 
 import React from 'react';
 import { format, parse, addMinutes } from 'date-fns';
-import { Calendar, Clock, Timer } from 'lucide-react';
+import { Calendar, Clock, Timer, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface BookingSummaryProps {
   selectedDate: Date | null;
   selectedTimeSlot: string | null;
+  selectedBay: number | null;
   duration: number;
 }
 
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
   selectedDate,
   selectedTimeSlot,
+  selectedBay,
   duration
 }) => {
   const calculateEndTime = () => {
@@ -59,6 +61,16 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
             <p className="text-sm font-medium">Date</p>
             <p className="text-sm text-muted-foreground">
               {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : 'Not selected'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Golf Bay</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedBay ? `Bay ${selectedBay}` : 'Not selected'}
             </p>
           </div>
         </div>
