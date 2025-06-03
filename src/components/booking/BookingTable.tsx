@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format, addMinutes, startOfDay, parse, isWithinInterval } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -146,7 +145,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
             return (
               <TableRow 
                 key={timeSlot} 
-                className="border-b border-gray-100"
+                className="transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-gray-100"
                 style={{ height: '16px' }}
               >
                 <TableCell className={`font-medium text-xs border-r-2 border-gray-200 bg-gray-50 sticky left-0 z-10 text-center py-0.5 ${
@@ -175,10 +174,11 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                     >
                       {blocked && bookingStart ? (
                         <div 
-                          className="bg-gray-200 border border-gray-300 rounded-sm m-0.5 flex items-center justify-center text-xs text-gray-700 font-medium relative"
+                          className="bg-gray-200 border border-gray-300 flex items-center justify-center text-xs text-gray-700 font-medium relative"
                           style={{
-                            height: `${bookingSpan * 16 - 4}px`,
-                            minHeight: '12px'
+                            height: `${bookingSpan * 16}px`,
+                            minHeight: '16px',
+                            width: '100%'
                           }}
                         >
                           <div className="text-center px-1">
@@ -196,7 +196,7 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                                 : 'hover:bg-green-50 hover:text-green-700 text-transparent group-hover:text-green-700'
                             }`}
                             onClick={() => onSlotSelect(bay, timeSlot)}
-                            style={{ height: '16px', minHeight: '16px' }}
+                            style={{ height: '16px', minHeight: '16px', width: '100%' }}
                           >
                             {selected ? '✓' : ''}
                             <Plus className={`h-2 w-2 ${selected ? 'inline' : 'hidden group-hover:inline'}`} />
