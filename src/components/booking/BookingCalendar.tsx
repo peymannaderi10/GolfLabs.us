@@ -1,60 +1,120 @@
-
-import React from 'react';
-import { format, addDays, startOfToday, isSameDay } from 'date-fns';
-import { Card } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { cn } from '@/lib/utils';
+import type { Booking } from '@/pages/Booking';
+import { formatDateToYYYYMMDD } from '@/pages/Booking';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { format, addDays, isSameDay, startOfToday, addWeeks, subWeeks, isBefore, isAfter, addMonths } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-interface BookingCalendarProps {
+export interface BookingCalendarProps {
   selectedDate: Date | null;
-  onDateSelect: (date: Date) => void;
+  onDateSelect: (date: Date | undefined) => void;
+  bookings?: Booking[]; // To potentially indicate if a day is generally busy, though details are in the table
+  className?: string;
 }
 
 export const BookingCalendar: React.FC<BookingCalendarProps> = ({
   selectedDate,
-  onDateSelect
+  onDateSelect,
+  bookings,
+  className,
 }) => {
   const today = startOfToday();
-  const days = Array.from({ length: 7 }, (_, i) => addDays(today, i));
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(today);
+  const maxFutureDate = addMonths(today, 6); // 6 months from today
+
+  const days = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
+
+  // Optional: Check if a day has any bookings at all
+  const bookedDayIndicator = React.useMemo(() => {
+    if (!bookings || bookings.length === 0) return new Set();
+    const datesWithBookings = new Set<string>();
+    bookings.forEach(booking => {
+      datesWithBookings.add(booking.date); // Assumes booking.date is YYYY-MM-DD
+    });
+    return datesWithBookings;
+  }, [bookings]);
+
+  const handlePreviousWeek = () => {
+    const newWeekStart = subWeeks(currentWeekStart, 1);
+    // Only allow going back if the new week's end date is not before today
+    if (!isBefore(addDays(newWeekStart, 6), today)) {
+      setCurrentWeekStart(newWeekStart);
+    }
+  };
+
+  const handleNextWeek = () => {
+    const newWeekStart = addWeeks(currentWeekStart, 1);
+    // Only allow going forward if the new week's start date is not after maxFutureDate
+    if (!isAfter(newWeekStart, maxFutureDate)) {
+      setCurrentWeekStart(newWeekStart);
+    }
+  };
+
+  const isPreviousWeekDisabled = isBefore(addDays(subWeeks(currentWeekStart, 1), 6), today);
+  const isNextWeekDisabled = isAfter(addWeeks(currentWeekStart, 1), maxFutureDate);
 
   return (
-    <div className="space-y-3">
-      {days.map((day, index) => {
-        const isSelected = selectedDate && isSameDay(day, selectedDate);
-        const isToday = isSameDay(day, today);
-        
-        return (
-          <Card
-            key={index}
-            className={`p-4 cursor-pointer transition-all duration-200 hover:shadow-lg ${
-              isSelected 
-                ? 'ring-2 ring-primary bg-primary/10' 
-                : 'hover:bg-accent/50'
-            }`}
-            onClick={() => onDateSelect(day)}
+    <div className={cn("mb-6", className)}>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold text-center md:text-left">Select a Day</h3>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handlePreviousWeek}
+            disabled={isPreviousWeekDisabled}
+            className="h-7 w-7"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
-                  {format(day, 'EEEE')}
-                </div>
-                <div className={`text-lg font-bold ${
-                  isSelected ? 'text-primary' : isToday ? 'text-primary' : 'text-foreground'
-                }`}>
-                  {format(day, 'MMMM d, yyyy')}
-                </div>
-                {isToday && (
-                  <div className="text-xs text-primary font-medium">Today</div>
-                )}
-              </div>
-              <div className={`text-2xl font-bold ${
-                isSelected ? 'text-primary' : isToday ? 'text-primary' : 'text-muted-foreground'
-              }`}>
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleNextWeek}
+            disabled={isNextWeekDisabled}
+            className="h-7 w-7"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {days.map((day) => {
+          const dayFormatted = formatDateToYYYYMMDD(day);
+          const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
+          const hasBookings = bookedDayIndicator.has(dayFormatted);
+          const isPastDay = isBefore(day, today);
+
+          return (
+            <Button
+              key={day.toString()}
+              variant={isSelected ? "default" : "outline"}
+              onClick={() => !isPastDay && onDateSelect(day)}
+              disabled={isPastDay}
+              className={cn(
+                "h-auto p-1.5 sm:p-2 flex flex-col items-center justify-center rounded-lg shadow-sm transition-all",
+                "focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                isSelected ? "bg-primary text-primary-foreground hover:bg-primary/90" : 
+                            "bg-card hover:bg-muted/50 border-border",
+                hasBookings && !isSelected ? "border-amber-500/50" : "",
+                isPastDay ? "opacity-50 cursor-not-allowed" : ""
+              )}
+            >
+              <span className={cn("text-[10px] sm:text-xs font-medium", isSelected ? "text-primary-foreground" : "text-muted-foreground")}>
+                {format(day, 'EEE')}
+              </span>
+              <span className={cn("text-base sm:text-lg font-bold", isSelected ? "text-primary-foreground" : "text-foreground")}>
                 {format(day, 'd')}
-              </div>
-            </div>
-          </Card>
-        );
-      })}
+              </span>
+              <span className={cn("text-[9px] sm:text-xs", isSelected ? "text-primary-foreground/80" : "text-muted-foreground/80")}>
+                {format(day, 'MMM')}
+              </span>
+            </Button>
+          );
+        })}
+      </div>
     </div>
   );
 };
