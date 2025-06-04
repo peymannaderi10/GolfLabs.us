@@ -73,8 +73,9 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
 
                 switch (status) {
                   case 'booked':
-                    cellStyles = cn(cellStyles, 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed opacity-70');
-                    contentStyles = cn(contentStyles, 'text-slate-500 dark:text-slate-400');
+                    cellStyles = cn(cellStyles, 'bg-destructive/20 dark:bg-destructive/30 cursor-not-allowed border-destructive/30');
+                    contentStyles = cn(contentStyles, 'text-destructive dark:text-destructive/90');
+                    cellContent = <span className="text-xs font-medium">Booked</span>;
                     break;
                   case 'selected-start':
                     cellStyles = cn(cellStyles, 'bg-primary ring-2 ring-primary-focus ring-offset-1');

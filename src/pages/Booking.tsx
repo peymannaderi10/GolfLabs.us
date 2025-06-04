@@ -249,7 +249,7 @@ const BookingPage = () => {
         <div className="mb-4 md:mb-6 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">Book Your Golf Bay</h1>
 
-        </div>
+      </div>
 
         {error && (
           <div className="w-full mx-auto mb-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-md flex items-center justify-center text-sm">
@@ -260,8 +260,8 @@ const BookingPage = () => {
 
         {/* Calendar - Full Width */}
         <div className="w-full mx-auto mb-4 md:mb-6">
-           <BookingCalendar
-              selectedDate={selectedDate}
+                <BookingCalendar
+                  selectedDate={selectedDate}
               onDateSelect={(date) => setSelectedDate(date || null)}
               bookings={bookings}
             />
@@ -274,11 +274,11 @@ const BookingPage = () => {
               <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
                 <Clock className="h-6 w-6" />
                 Available Bays & Time Slots
-              </CardTitle>
+                </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
                 Select a start and end time, open booking details to confirm.
               </p>
-            </CardHeader>
+              </CardHeader>
             <CardContent className="p-0 sm:p-2 md:p-3">
               {selectedDate ? (
                 <BayTimeTable
@@ -292,12 +292,12 @@ const BookingPage = () => {
               ) : (
                 <p className="text-muted-foreground text-center py-10">Select a date to see availability.</p>
               )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
         <BookingSummary 
-          selectedDate={selectedDate}
+                    selectedDate={selectedDate}
           selection={selection}
           timeSlots={timeSlots}
           onConfirmBooking={handleBookingConfirm}
