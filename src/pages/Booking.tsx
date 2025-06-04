@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar as CalendarIcon, Clock, AlertTriangle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { BookingCalendar } from '../components/booking/BookingCalendar';
 import { BayTimeTable } from '../components/booking/BayTimeTable';
 import { BookingSummary } from '../components/booking/BookingSummary';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 // --- Helper Functions ---
 export const TIME_INTERVAL_MINUTES = 15;
@@ -15,7 +18,9 @@ export const generateTimeSlots = (intervalMinutes: number = TIME_INTERVAL_MINUTE
   const slots: string[] = [];
   for (let hour = 0; hour < 24; hour++) {
     for (let minute = 0; minute < 60; minute += intervalMinutes) {
-      slots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+      slots.push(`${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${period}`);
     }
   }
   return slots;
@@ -26,7 +31,23 @@ export const formatDateToYYYYMMDD = (date: Date | null): string => {
   return date.toISOString().split('T')[0];
 };
 
-export const timeToIndex = (time: string, slots: string[]): number => slots.indexOf(time);
+export const timeToIndex = (time: string, slots: string[]): number => {
+  // Convert 12-hour time to 24-hour time for comparison
+  const [timeStr, period] = time.split(' ');
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  const hour24 = period === 'PM' ? (hours === 12 ? 12 : hours + 12) : (hours === 12 ? 0 : hours);
+  const time24 = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  
+  // Find the corresponding 12-hour time slot
+  return slots.findIndex(slot => {
+    const [slotTime, slotPeriod] = slot.split(' ');
+    const [slotHours, slotMinutes] = slotTime.split(':').map(Number);
+    const slotHour24 = slotPeriod === 'PM' ? (slotHours === 12 ? 12 : slotHours + 12) : (slotHours === 12 ? 0 : slotHours);
+    const slotTime24 = `${slotHour24.toString().padStart(2, '0')}:${slotMinutes.toString().padStart(2, '0')}`;
+    return slotTime24 === time24;
+  });
+};
+
 export const indexToTime = (index: number, slots: string[]): string | undefined => slots[index];
 
 // --- Interfaces ---
@@ -53,12 +74,21 @@ const MOCK_BOOKINGS_DATA: Omit<Booking, 'id' | 'date'>[] = [
 ];
 
 const BookingPage = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selection, setSelection] = useState<SelectionState>({ bayId: null, startTime: null, endTime: null });
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const timeSlots = useMemo(() => generateTimeSlots(), []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const dateStr = formatDateToYYYYMMDD(selectedDate);
@@ -181,69 +211,102 @@ const BookingPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-4 md:px-6">
-      <div className="mb-4 md:mb-6 text-center">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">Book Your Golf Bay</h1>
-        <p className="text-lg sm:text-xl text-muted-foreground">
-          Select a day, then click a start time and an end time in an available bay.
-        </p>
-      </div>
-
-      {error && (
-        <div className="w-full mx-auto mb-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-md flex items-center justify-center text-sm">
-          <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
-          <p>{error}</p>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Navigation */}
+      <motion.nav 
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full z-50 bg-background/80 backdrop-blur-sm"
+      >
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-2xl font-bold text-foreground"
+            >
+              <span className="text-primary">GOLF</span><span className="text-foreground">LABS</span>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Link to="/">
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold">
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Back to Home
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
         </div>
-      )}
+      </motion.nav>
 
-      {/* Calendar - Full Width */}
-      <div className="w-full mx-auto mb-4 md:mb-6">
-         <BookingCalendar
-            selectedDate={selectedDate}
-            onDateSelect={(date) => setSelectedDate(date || null)}
-            bookings={bookings}
-          />
-      </div>
-      
-      {/* BayTimeTable - Full Width Card */}
-      <div className="w-full mx-auto">
-        <Card className="shadow-xl">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
-              <Clock className="h-6 w-6" />
-              Available Bays & Time Slots
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {selectedDate ? `Showing availability for ${selectedDate.toLocaleDateString()}` : "Please select a date."}
-            </p>
-          </CardHeader>
-          <CardContent className="p-0 sm:p-2 md:p-3">
-            {selectedDate ? (
-              <BayTimeTable
-                bayCount={MAX_BAYS}
-                timeSlots={timeSlots}
-                bookings={bookings}
-                selection={selection}
-                onSlotClick={handleSlotClick}
-                isSlotBooked={isSlotBooked}
-              />
-            ) : (
-              <p className="text-muted-foreground text-center py-10">Select a date to see availability.</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <div className="px-4 md:px-6 pb-24">
+        <div className="mb-4 md:mb-6 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">Book Your Golf Bay</h1>
 
-      <BookingSummary 
-        selectedDate={selectedDate}
-        selection={selection}
-        timeSlots={timeSlots}
-        onConfirmBooking={handleBookingConfirm}
-        onClearSelection={handleClearSelection}
-        timeIntervalMinutes={TIME_INTERVAL_MINUTES}
-        minSlotsDuration={MIN_SLOTS_DURATION}
-        maxSlotsDuration={MAX_SLOTS_DURATION}
-      />
+        </div>
+
+        {error && (
+          <div className="w-full mx-auto mb-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-md flex items-center justify-center text-sm">
+            <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Calendar - Full Width */}
+        <div className="w-full mx-auto mb-4 md:mb-6">
+           <BookingCalendar
+              selectedDate={selectedDate}
+              onDateSelect={(date) => setSelectedDate(date || null)}
+              bookings={bookings}
+            />
+        </div>
+        
+        {/* BayTimeTable - Full Width Card */}
+        <div className="w-full mx-auto">
+          <Card className="shadow-xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
+                <Clock className="h-6 w-6" />
+                Available Bays & Time Slots
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Select a start and end time, open booking details to confirm.
+              </p>
+            </CardHeader>
+            <CardContent className="p-0 sm:p-2 md:p-3">
+              {selectedDate ? (
+                <BayTimeTable
+                  bayCount={MAX_BAYS}
+                  timeSlots={timeSlots}
+                  bookings={bookings}
+                  selection={selection}
+                  onSlotClick={handleSlotClick}
+                  isSlotBooked={isSlotBooked}
+                />
+              ) : (
+                <p className="text-muted-foreground text-center py-10">Select a date to see availability.</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <BookingSummary 
+          selectedDate={selectedDate}
+          selection={selection}
+          timeSlots={timeSlots}
+          onConfirmBooking={handleBookingConfirm}
+          onClearSelection={handleClearSelection}
+          timeIntervalMinutes={TIME_INTERVAL_MINUTES}
+          minSlotsDuration={MIN_SLOTS_DURATION}
+          maxSlotsDuration={MAX_SLOTS_DURATION}
+        />
+      </div>
     </div>
   );
 };
