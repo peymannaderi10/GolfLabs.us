@@ -22,7 +22,7 @@ export interface BookingSummaryProps {
   maxSlotsDuration: number;
   className?: string;
 }
-
+ 
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
   selectedDate,
   selection,
