@@ -6,7 +6,7 @@ import { BayTimeTable } from '../components/booking/BayTimeTable';
 import { BookingSummary } from '../components/booking/BookingSummary';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // --- Helper Functions ---
 export const TIME_INTERVAL_MINUTES = 15;
@@ -79,6 +79,7 @@ const BookingPage = () => {
   const [selection, setSelection] = useState<SelectionState>({ bayId: null, startTime: null, endTime: null });
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
@@ -187,23 +188,36 @@ const BookingPage = () => {
       return;
     }
     
-    const newBooking: Booking = {
-      id: `booking-${Date.now()}`, // Temporary ID
+    // Calculate duration
+    const startIndex = timeToIndex(selection.startTime, timeSlots);
+    const endIndex = timeToIndex(selection.endTime, timeSlots);
+    const durationMinutes = (endIndex - startIndex) * TIME_INTERVAL_MINUTES;
+    const duration = `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
+    
+    // Calculate price
+    let totalPrice = 0;
+    for (let i = startIndex; i < endIndex; i++) {
+      const timeSlot = timeSlots[i];
+      const hour = parseInt(timeSlot.split(':')[0]);
+      const isDayRate = hour >= 9 && hour < 22; // Day rate from 9am to 10pm
+      const rate = isDayRate ? 35 : 25; // $35/hr day rate, $25/hr night rate
+      totalPrice += (rate / 4); // Divide by 4 since we're working with 15-minute intervals
+    }
+    
+    // Prepare booking details for checkout
+    const bookingDetails = {
+      selectedDate,
       bayId: selection.bayId,
-      date: formatDateToYYYYMMDD(selectedDate),
       startTime: selection.startTime,
       endTime: selection.endTime,
+      duration,
+      price: totalPrice
     };
-
-    // Add to bookings list (simulating successful booking)
-    setBookings(prev => [...prev, newBooking]);
     
-    // Log and clear selection
-    console.log('Booking Confirmed:', newBooking);
-    setSelection({ bayId: null, startTime: null, endTime: null });
-    setError(null);
-    // Potentially show a success toast
-  }, [selection, selectedDate]);
+    // Navigate to checkout page with booking details
+    navigate('/checkout', { state: { bookingDetails } });
+    
+  }, [selection, selectedDate, timeSlots, navigate]);
 
   const handleClearSelection = useCallback(() => {
     setSelection({ bayId: null, startTime: null, endTime: null });
