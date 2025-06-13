@@ -9,6 +9,23 @@ import { Elements } from '@stripe/react-stripe-js';
 import { StripeCheckoutForm } from '../components/checkout/StripeCheckoutForm';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// Helper function to parse time string (e.g., "2:30 PM") and return hours and minutes
+const parseTimeString = (timeStr: string): { hours: number; minutes: number } => {
+  const [time, period] = timeStr.split(' ');
+  const [hours, minutes] = time.split(':').map(Number);
+  const isPM = period === 'PM';
+  const hour24 = isPM ? (hours === 12 ? 12 : hours + 12) : (hours === 12 ? 0 : hours);
+  return { hours: hour24, minutes };
+};
+
+// Helper function to create ISO timestamp from date and time string
+const createISOTimestamp = (date: Date, timeStr: string): string => {
+  const { hours, minutes } = parseTimeString(timeStr);
+  const timestamp = new Date(date);
+  timestamp.setHours(hours, minutes, 0, 0);
+  return timestamp.toISOString();
+};
+
 // Initialize Stripe with the publishable key
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -43,9 +60,11 @@ const CheckoutPage = () => {
       bookingDetails: {
         date: bookingDetails.selectedDate.toISOString(),
         bayId: bookingDetails.bayId,
-        startTime: bookingDetails.startTime,
-        endTime: bookingDetails.endTime,
+        startTime: createISOTimestamp(bookingDetails.selectedDate, bookingDetails.startTime),
+        endTime: createISOTimestamp(bookingDetails.selectedDate, bookingDetails.endTime),
         duration: bookingDetails.duration,
+        locationId: '6f4dfdfe-a5a3-46c5-bd09-70db1ce2d0aa', // Default location ID
+        userId: crypto.randomUUID(), // Generate a random UUID for the user
       }
     };
 
