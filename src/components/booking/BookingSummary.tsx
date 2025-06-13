@@ -97,7 +97,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                 {isMinimized && isSelectionValid && <CheckCircle className="h-5 w-5 text-primary mr-2 flex-shrink-0" />} 
                 {isMinimized && !isSelectionValid && <Info className="h-5 w-5 text-muted-foreground mr-2 flex-shrink-0" />} 
                 <span className="font-semibold text-sm text-foreground">
-                    {isMinimized ? (isSelectionValid ? `Bay ${bayId} - ${formatDuration(calculatedDurationMinutes)}` : "Booking Details") : "Booking Summary"}
+                    {isMinimized ? (isSelectionValid ? `Bay ${BAY_NUMBERS[bayId]} - ${formatDuration(calculatedDurationMinutes)}` : "Booking Details") : "Booking Summary"}
                 </span>
             </div>
             <button 
