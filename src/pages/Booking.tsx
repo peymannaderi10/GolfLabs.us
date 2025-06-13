@@ -7,7 +7,8 @@ import { BookingSummary } from '../components/booking/BookingSummary';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { BOOKING, BAY_IDS } from '@/constants';
+import { BOOKING, BAY_IDS, LOCATION_IDS, API } from '@/constants';
+import { format } from 'date-fns';
 
 // --- Helper Functions ---
 export const TIME_INTERVAL_MINUTES = BOOKING.TIME_INTERVAL_MINUTES;
@@ -15,101 +16,100 @@ const MAX_BAYS = BOOKING.MAX_BAYS;
 const MIN_SLOTS_DURATION = BOOKING.MIN_SLOTS_DURATION;
 const MAX_SLOTS_DURATION = BOOKING.MAX_SLOTS_DURATION;
 
-export const generateTimeSlots = (intervalMinutes: number = TIME_INTERVAL_MINUTES): string[] => {
-  const slots: string[] = [];
+// Format date to YYYY-MM-DD
+export const formatDateToYYYYMMDD = (date: Date | null): string => {
+  if (!date) return '';
+  return format(date, 'yyyy-MM-dd');
+};
+
+// Generate time slots from 00:00 to 23:45 with 15-minute intervals
+export const generateTimeSlots = (): string[] => {
+  const slots = [];
   for (let hour = 0; hour < 24; hour++) {
-    for (let minute = 0; minute < 60; minute += intervalMinutes) {
-      const period = hour >= 12 ? 'PM' : 'AM';
-      const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
-      slots.push(`${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${period}`);
+    for (let minute = 0; minute < 60; minute += TIME_INTERVAL_MINUTES) {
+      const h = hour.toString().padStart(2, '0');
+      const m = minute.toString().padStart(2, '0');
+      const time = `${h}:${m}`;
+      
+      // Convert to 12-hour format with AM/PM
+      const hour12 = hour % 12 || 12;
+      const period = hour < 12 ? 'AM' : 'PM';
+      const time12 = `${hour12}:${m} ${period}`;
+      
+      slots.push(time12);
     }
   }
   return slots;
 };
 
-export const formatDateToYYYYMMDD = (date: Date | null): string => {
-  if (!date) return '';
-  return date.toISOString().split('T')[0];
+// Convert time to index in timeSlots array
+export const timeToIndex = (timeString: string, timeSlots: string[]): number => {
+  return timeSlots.findIndex(t => t === timeString);
 };
-
-export const timeToIndex = (time: string, slots: string[]): number => {
-  // Convert 12-hour time to 24-hour time for comparison
-  const [timeStr, period] = time.split(' ');
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  const hour24 = period === 'PM' ? (hours === 12 ? 12 : hours + 12) : (hours === 12 ? 0 : hours);
-  const time24 = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  
-  // Find the corresponding 12-hour time slot
-  return slots.findIndex(slot => {
-    const [slotTime, slotPeriod] = slot.split(' ');
-    const [slotHours, slotMinutes] = slotTime.split(':').map(Number);
-    const slotHour24 = slotPeriod === 'PM' ? (slotHours === 12 ? 12 : slotHours + 12) : (slotHours === 12 ? 0 : slotHours);
-    const slotTime24 = `${slotHour24.toString().padStart(2, '0')}:${slotMinutes.toString().padStart(2, '0')}`;
-    return slotTime24 === time24;
-  });
-};
-
-export const indexToTime = (index: number, slots: string[]): string | undefined => slots[index];
 
 // --- Interfaces ---
 export interface Booking {
   id: string;
   bayId: string;
-  date: string; // YYYY-MM-DD
-  startTime: string; // HH:MM, inclusive start of the first slot
-  endTime: string;   // HH:MM, inclusive start of the last slot
+  date?: string;
+  startTime: string;
+  endTime: string;
 }
 
 export interface SelectionState {
   bayId: string | null;
-  startTime: string | null; // Inclusive start of the first selected slot
-  endTime: string | null;   // Inclusive start of the last selected slot
+  startTime: string | null;
+  endTime: string | null;
 }
 
-// --- Mock Data ---
-const MOCK_BOOKINGS_DATA: Omit<Booking, 'id' | 'date'>[] = [
-  { bayId: BAY_IDS[1], startTime: '10:00', endTime: '10:45' }, // Bay 1
-  { bayId: BAY_IDS[2], startTime: '14:30', endTime: '14:45' }, // Bay 2
-  { bayId: BAY_IDS[3], startTime: '18:00', endTime: '19:45' }, // Bay 3
-  { bayId: BAY_IDS[4], startTime: '08:00', endTime: '08:00' }, // Bay 4
-];
+// BookingPage component
+const BookingPage: React.FC = () => {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selection, setSelection] = useState<SelectionState>({
+    bayId: null,
+    startTime: null,
+    endTime: null,
+  });
 
-const BookingPage = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [selection, setSelection] = useState<SelectionState>({ bayId: null, startTime: null, endTime: null });
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
+  
+  // Time slots generation (00:00 to 23:45 in 15-minute intervals)
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
+  // Fetch bookings when the selected date changes
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+    const fetchBookings = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Format date as YYYY-MM-DD for API
+        const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+        
+        const response = await fetch(`${API.BASE_URL}/bookings?locationId=${LOCATION_IDS.CHERRY_HILL}&date=${formattedDate}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch bookings');
+        }
+        
+        const data = await response.json();
+        setBookings(data);
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+        setError('Failed to load bookings. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const dateStr = formatDateToYYYYMMDD(selectedDate);
-    if (dateStr) {
-      // Simulate fetching bookings for the selected date
-      const newBookings: Booking[] = MOCK_BOOKINGS_DATA.map((b, index) => ({
-        ...b,
-        id: `${dateStr}-bay${b.bayId}-${index}`,
-        date: dateStr,
-      }));
-      setBookings(newBookings);
-      // Clear selection when date changes
-      setSelection({ bayId: null, startTime: null, endTime: null });
-      setError(null);
-    } else {
-      setBookings([]);
-    }
+    
+    fetchBookings();
   }, [selectedDate]);
 
+  // Check if a slot is booked
   const isSlotBooked = useCallback((bayId: string, timeSlot: string): boolean => {
     const targetSlotIndex = timeToIndex(timeSlot, timeSlots);
     return bookings.some(booking => {
@@ -156,7 +156,7 @@ const BookingPage = () => {
       // Validate range: no conflicts and within duration limits
       let hasConflict = false;
       for (let i = currentStartTimeIndex; i <= potentialEndTimeIndex; i++) {
-        const slotInCheck = indexToTime(i, timeSlots)!;
+        const slotInCheck = timeSlots[i];
         if (i > currentStartTimeIndex && isSlotBooked(bayId, slotInCheck)) {
           hasConflict = true;
           break;

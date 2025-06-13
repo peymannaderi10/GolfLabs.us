@@ -19,14 +19,6 @@ const parseTimeString = (timeStr: string): { hours: number; minutes: number } =>
   return { hours: hour24, minutes };
 };
 
-// Helper function to create ISO timestamp from date and time string
-const createISOTimestamp = (date: Date, timeStr: string): string => {
-  const { hours, minutes } = parseTimeString(timeStr);
-  const timestamp = new Date(date);
-  timestamp.setHours(hours, minutes, 0, 0);
-  return timestamp.toISOString();
-};
-
 // Initialize Stripe with the publishable key
 const stripePromise = loadStripe(API.STRIPE_PUBLISHABLE_KEY);
 
