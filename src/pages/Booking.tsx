@@ -53,24 +53,24 @@ export const indexToTime = (index: number, slots: string[]): string | undefined 
 // --- Interfaces ---
 export interface Booking {
   id: string;
-  bayId: number;
+  bayId: string;
   date: string; // YYYY-MM-DD
   startTime: string; // HH:MM, inclusive start of the first slot
   endTime: string;   // HH:MM, inclusive start of the last slot
 }
 
 export interface SelectionState {
-  bayId: number | null;
+  bayId: string | null;
   startTime: string | null; // Inclusive start of the first selected slot
   endTime: string | null;   // Inclusive start of the last selected slot
 }
 
 // --- Mock Data ---
 const MOCK_BOOKINGS_DATA: Omit<Booking, 'id' | 'date'>[] = [
-  { bayId: 1, startTime: '10:00', endTime: '10:45' }, // Books 10:00, 10:15, 10:30, 10:45 (4 slots)
-  { bayId: 3, startTime: '14:30', endTime: '14:45' }, // Books 14:30, 14:45 (2 slots)
-  { bayId: 5, startTime: '18:00', endTime: '19:45' }, // Books 18:00 to 19:45 (8 slots, 2 hours)
-  { bayId: 1, startTime: '08:00', endTime: '08:00' }, // Books 08:00 (1 slot)
+  { bayId: '550e8400-e29b-41d4-a716-446655440000', startTime: '10:00', endTime: '10:45' }, // Bay 1
+  { bayId: '550e8400-e29b-41d4-a716-446655440001', startTime: '14:30', endTime: '14:45' }, // Bay 2
+  { bayId: '550e8400-e29b-41d4-a716-446655440002', startTime: '18:00', endTime: '19:45' }, // Bay 3
+  { bayId: '550e8400-e29b-41d4-a716-446655440003', startTime: '08:00', endTime: '08:00' }, // Bay 4
 ];
 
 const BookingPage = () => {
@@ -109,7 +109,7 @@ const BookingPage = () => {
     }
   }, [selectedDate]);
 
-  const isSlotBooked = useCallback((bayId: number, timeSlot: string): boolean => {
+  const isSlotBooked = useCallback((bayId: string, timeSlot: string): boolean => {
     const targetSlotIndex = timeToIndex(timeSlot, timeSlots);
     return bookings.some(booking => {
       if (booking.bayId !== bayId) return false;
@@ -119,7 +119,7 @@ const BookingPage = () => {
     });
   }, [bookings, timeSlots]);
 
-  const handleSlotClick = useCallback((bayId: number, clickedTimeSlot: string) => {
+  const handleSlotClick = useCallback((bayId: string, clickedTimeSlot: string) => {
     setError(null); // Clear previous errors
 
     if (isSlotBooked(bayId, clickedTimeSlot)) {

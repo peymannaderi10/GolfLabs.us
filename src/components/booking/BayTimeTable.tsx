@@ -2,13 +2,25 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import type { Booking, SelectionState } from '@/pages/Booking'; // Assuming types are exported from Booking.tsx
 
+// Map of bay numbers to UUIDs
+const BAY_UUIDS = {
+  1: '550e8400-e29b-41d4-a716-446655440000',
+  2: '550e8400-e29b-41d4-a716-446655440001',
+  3: '550e8400-e29b-41d4-a716-446655440002',
+  4: '550e8400-e29b-41d4-a716-446655440003',
+  5: '550e8400-e29b-41d4-a716-446655440004',
+  6: '550e8400-e29b-41d4-a716-446655440005',
+  7: '550e8400-e29b-41d4-a716-446655440006',
+  8: '550e8400-e29b-41d4-a716-446655440007',
+};
+
 interface BayTimeTableProps {
   bayCount: number;
   timeSlots: string[];
   bookings: Booking[];
   selection: SelectionState;
-  onSlotClick: (bayId: number, timeSlot: string) => void;
-  isSlotBooked: (bayId: number, timeSlot: string) => boolean; // Already implemented in Booking.tsx but passed as prop for direct use
+  onSlotClick: (bayId: string, timeSlot: string) => void;
+  isSlotBooked: (bayId: string, timeSlot: string) => boolean; // Already implemented in Booking.tsx but passed as prop for direct use
 }
 
 export const BayTimeTable: React.FC<BayTimeTableProps> = ({
@@ -20,7 +32,7 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
   isSlotBooked,
 }) => {
 
-  const getSlotStatus = (bayId: number, timeSlot: string, selectionState: SelectionState, timeSlotsArray: string[]) => {
+  const getSlotStatus = (bayId: string, timeSlot: string, selectionState: SelectionState, timeSlotsArray: string[]) => {
     if (isSlotBooked(bayId, timeSlot)) {
       return 'booked';
     }
@@ -64,7 +76,8 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
                 {timeSlot}
               </td>
               {[...Array(bayCount)].map((_, bayIndex) => {
-                const currentBayId = bayIndex + 1;
+                const bayNumber = bayIndex + 1;
+                const currentBayId = BAY_UUIDS[bayNumber as keyof typeof BAY_UUIDS];
                 const status = getSlotStatus(currentBayId, timeSlot, selection, timeSlots);
                 
                 let cellStyles = "p-0 border border-border h-8 min-h-[2rem] cursor-pointer transition-all duration-150 ease-in-out bg-background m-0";
@@ -104,7 +117,7 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
                       className={contentStyles}
                       onClick={() => status !== 'booked' && onSlotClick(currentBayId, timeSlot)}
                       disabled={status === 'booked'}
-                      aria-label={`Select Bay ${currentBayId} at ${timeSlot}${status === 'booked' ? ' (Booked)' : ''}`}
+                      aria-label={`Select Bay ${bayNumber} at ${timeSlot}${status === 'booked' ? ' (Booked)' : ''}`}
                     >
                       {cellContent}
                     </button>

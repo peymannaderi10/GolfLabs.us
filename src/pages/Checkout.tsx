@@ -31,7 +31,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface BookingDetails {
   selectedDate: Date;
-  bayId: number;
+  bayId: string;
   startTime: string;
   endTime: string;
   duration: string;
@@ -58,10 +58,10 @@ const CheckoutPage = () => {
     const requestBody = {
       amount: Math.round(bookingDetails.price * 100), // Convert to cents
       bookingDetails: {
-        date: bookingDetails.selectedDate.toISOString(),
+        date: bookingDetails.selectedDate.toISOString().split('T')[0], // Just the date part YYYY-MM-DD
         bayId: bookingDetails.bayId,
-        startTime: createISOTimestamp(bookingDetails.selectedDate, bookingDetails.startTime),
-        endTime: createISOTimestamp(bookingDetails.selectedDate, bookingDetails.endTime),
+        startTime: bookingDetails.startTime, // This should be in format "2:30 PM"
+        endTime: bookingDetails.endTime, // This should be in format "2:30 PM"
         duration: bookingDetails.duration,
         locationId: '6f4dfdfe-a5a3-46c5-bd09-70db1ce2d0aa', // Default location ID
         userId: crypto.randomUUID(), // Generate a random UUID for the user

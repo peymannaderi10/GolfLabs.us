@@ -227,24 +227,24 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({
         </div>
 
         {/* Email Field */}
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={handleEmailChange}
-            onBlur={handleEmailBlur}
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          value={email}
+          onChange={handleEmailChange}
+          onBlur={handleEmailBlur}
             placeholder="john.doe@example.com"
-            className={emailError ? "border-destructive" : ""}
-          />
-          {emailError && (
+          className={emailError ? "border-destructive" : ""}
+        />
+        {emailError && (
             <p className="text-sm text-destructive">{emailError}</p>
-          )}
-        </div>
+        )}
+      </div>
 
         {/* Phone Field */}
-        <div className="space-y-2">
+      <div className="space-y-2">
           <Label htmlFor="phone">Phone Number</Label>
           <Input
             id="phone"
@@ -292,4 +292,4 @@ export const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({
       )}
     </form>
   );
-};
+}; 
