@@ -8,6 +8,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { StripeCheckoutForm } from '../components/checkout/StripeCheckoutForm';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BAY_NUMBERS, LOCATION_IDS, TEST_USER_ID, API } from '@/constants';
 
 // Helper function to parse time string (e.g., "2:30 PM") and return hours and minutes
 const parseTimeString = (timeStr: string): { hours: number; minutes: number } => {
@@ -27,7 +28,7 @@ const createISOTimestamp = (date: Date, timeStr: string): string => {
 };
 
 // Initialize Stripe with the publishable key
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(API.STRIPE_PUBLISHABLE_KEY);
 
 interface BookingDetails {
   selectedDate: Date;
@@ -63,14 +64,14 @@ const CheckoutPage = () => {
         startTime: bookingDetails.startTime, // This should be in format "2:30 PM"
         endTime: bookingDetails.endTime, // This should be in format "2:30 PM"
         duration: bookingDetails.duration,
-        locationId: '6f4dfdfe-a5a3-46c5-bd09-70db1ce2d0aa', // Default location ID
-        userId: crypto.randomUUID(), // Generate a random UUID for the user
+        locationId: LOCATION_IDS.CHERRY_HILL,
+        userId: TEST_USER_ID,
       }
     };
 
     console.log('Sending booking details:', requestBody); // Debug log
 
-    fetch(`${import.meta.env.VITE_API_URL}/create-payment-intent`, {
+    fetch(`${API.BASE_URL}/create-payment-intent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
@@ -90,7 +91,7 @@ const CheckoutPage = () => {
         setError(error.message || 'An error occurred while setting up payment');
         setIsLoading(false);
       });
-}, [bookingDetails]);
+  }, [bookingDetails]);
 
   if (!bookingDetails) {
     return (
@@ -196,7 +197,7 @@ const CheckoutPage = () => {
                   <div className="flex items-center text-muted-foreground">
                     <MapPin className="h-4 w-4 mr-2 flex-shrink-0" /> Bay:
                   </div>
-                  <span className="font-medium text-foreground">{bookingDetails.bayId}</span>
+                  <span className="font-medium text-foreground">Bay {BAY_NUMBERS[bookingDetails.bayId]}</span>
                 </div>
 
                 <div className="flex items-center justify-between">

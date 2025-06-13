@@ -1,18 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import type { Booking, SelectionState } from '@/pages/Booking'; // Assuming types are exported from Booking.tsx
-
-// Map of bay numbers to UUIDs
-const BAY_UUIDS = {
-  1: '550e8400-e29b-41d4-a716-446655440000',
-  2: '550e8400-e29b-41d4-a716-446655440001',
-  3: '550e8400-e29b-41d4-a716-446655440002',
-  4: '550e8400-e29b-41d4-a716-446655440003',
-  5: '550e8400-e29b-41d4-a716-446655440004',
-  6: '550e8400-e29b-41d4-a716-446655440005',
-  7: '550e8400-e29b-41d4-a716-446655440006',
-  8: '550e8400-e29b-41d4-a716-446655440007',
-};
+import type { Booking, SelectionState } from '@/pages/Booking';
+import { BAY_IDS } from '@/constants';
 
 interface BayTimeTableProps {
   bayCount: number;
@@ -20,13 +9,12 @@ interface BayTimeTableProps {
   bookings: Booking[];
   selection: SelectionState;
   onSlotClick: (bayId: string, timeSlot: string) => void;
-  isSlotBooked: (bayId: string, timeSlot: string) => boolean; // Already implemented in Booking.tsx but passed as prop for direct use
+  isSlotBooked: (bayId: string, timeSlot: string) => boolean;
 }
 
 export const BayTimeTable: React.FC<BayTimeTableProps> = ({
   bayCount,
   timeSlots,
-  // bookings, // bookings are used via isSlotBooked and selection logic
   selection,
   onSlotClick,
   isSlotBooked,
@@ -77,7 +65,7 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
               </td>
               {[...Array(bayCount)].map((_, bayIndex) => {
                 const bayNumber = bayIndex + 1;
-                const currentBayId = BAY_UUIDS[bayNumber as keyof typeof BAY_UUIDS];
+                const currentBayId = BAY_IDS[bayNumber as keyof typeof BAY_IDS];
                 const status = getSlotStatus(currentBayId, timeSlot, selection, timeSlots);
                 
                 let cellStyles = "p-0 border border-border h-8 min-h-[2rem] cursor-pointer transition-all duration-150 ease-in-out bg-background m-0";

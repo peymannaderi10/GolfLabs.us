@@ -7,12 +7,13 @@ import { BookingSummary } from '../components/booking/BookingSummary';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
+import { BOOKING, BAY_IDS } from '@/constants';
 
 // --- Helper Functions ---
-export const TIME_INTERVAL_MINUTES = 15;
-const MAX_BAYS = 8;
-const MIN_SLOTS_DURATION = 1; // 1 * 15 minutes = 15 minutes
-const MAX_SLOTS_DURATION = (24 * 60) / TIME_INTERVAL_MINUTES; // 24 hours = 96 slots
+export const TIME_INTERVAL_MINUTES = BOOKING.TIME_INTERVAL_MINUTES;
+const MAX_BAYS = BOOKING.MAX_BAYS;
+const MIN_SLOTS_DURATION = BOOKING.MIN_SLOTS_DURATION;
+const MAX_SLOTS_DURATION = BOOKING.MAX_SLOTS_DURATION;
 
 export const generateTimeSlots = (intervalMinutes: number = TIME_INTERVAL_MINUTES): string[] => {
   const slots: string[] = [];
@@ -67,10 +68,10 @@ export interface SelectionState {
 
 // --- Mock Data ---
 const MOCK_BOOKINGS_DATA: Omit<Booking, 'id' | 'date'>[] = [
-  { bayId: '550e8400-e29b-41d4-a716-446655440000', startTime: '10:00', endTime: '10:45' }, // Bay 1
-  { bayId: '550e8400-e29b-41d4-a716-446655440001', startTime: '14:30', endTime: '14:45' }, // Bay 2
-  { bayId: '550e8400-e29b-41d4-a716-446655440002', startTime: '18:00', endTime: '19:45' }, // Bay 3
-  { bayId: '550e8400-e29b-41d4-a716-446655440003', startTime: '08:00', endTime: '08:00' }, // Bay 4
+  { bayId: BAY_IDS[1], startTime: '10:00', endTime: '10:45' }, // Bay 1
+  { bayId: BAY_IDS[2], startTime: '14:30', endTime: '14:45' }, // Bay 2
+  { bayId: BAY_IDS[3], startTime: '18:00', endTime: '19:45' }, // Bay 3
+  { bayId: BAY_IDS[4], startTime: '08:00', endTime: '08:00' }, // Bay 4
 ];
 
 const BookingPage = () => {

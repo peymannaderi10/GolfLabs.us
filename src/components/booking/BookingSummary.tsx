@@ -5,11 +5,7 @@ import { cn } from '@/lib/utils';
 import { MapPin, Calendar, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, ShoppingCart, Trash2, Info, DollarSign } from 'lucide-react';
 import type { SelectionState } from '@/pages/Booking'; // Import SelectionState
 import { timeToIndex } from '@/pages/Booking'; // Import timeToIndex
-
-const DAY_RATE = 35; // $35/hr from 9am to 10pm
-const NIGHT_RATE = 25; // $25/hr from 10pm to 9am
-const DAY_START = 9; // 9am
-const DAY_END = 22; // 10pm
+import { BAY_NUMBERS, PRICING } from '@/constants';
 
 export interface BookingSummaryProps {
   selectedDate: Date | null;
@@ -59,8 +55,8 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
     for (let i = startIndex; i < endIndex; i++) {
       const timeSlot = timeSlots[i];
       const hour = parseInt(timeSlot.split(':')[0]);
-      const isDayRate = hour >= DAY_START && hour < DAY_END;
-      const rate = isDayRate ? DAY_RATE : NIGHT_RATE;
+      const isDayRate = hour >= PRICING.DAY_START && hour < PRICING.DAY_END;
+      const rate = isDayRate ? PRICING.DAY_RATE : PRICING.NIGHT_RATE;
       totalPrice += (rate / 4); // Divide by 4 since we're working with 15-minute intervals
     }
 
@@ -135,7 +131,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                   <div className="flex items-center text-muted-foreground">
                     <MapPin className="h-4 w-4 mr-2 flex-shrink-0" /> Bay:
                   </div>
-                  <span className="font-medium text-foreground">{bayId}</span>
+                  <span className="font-medium text-foreground">Bay {BAY_NUMBERS[bayId]}</span>
                 </div>
               ) : (
                 <div className="flex items-center text-muted-foreground"><MapPin className="h-4 w-4 mr-2" /> Select a bay.</div>
