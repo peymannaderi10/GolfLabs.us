@@ -31,10 +31,25 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
     if (!bookings || bookings.length === 0) return new Set();
     const datesWithBookings = new Set<string>();
     bookings.forEach(booking => {
-      datesWithBookings.add(booking.date); // Assumes booking.date is YYYY-MM-DD
+      try {
+        // Check if startTime is a full timestamp or just a time string
+        if (booking.startTime.includes('T') || booking.startTime.includes('-')) {
+          // It's a full timestamp
+          const bookingDate = new Date(booking.startTime);
+          const dateString = formatDateToYYYYMMDD(bookingDate);
+          datesWithBookings.add(dateString);
+        } else {
+          // It's just a time string, use the selected date
+          if (selectedDate) {
+            datesWithBookings.add(formatDateToYYYYMMDD(selectedDate));
+          }
+        }
+      } catch (error) {
+        console.error("Error processing booking date:", error, booking);
+      }
     });
     return datesWithBookings;
-  }, [bookings]);
+  }, [bookings, selectedDate]);
 
   const handlePreviousWeek = () => {
     const newWeekStart = subWeeks(currentWeekStart, 1);

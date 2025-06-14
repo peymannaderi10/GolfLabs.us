@@ -4,9 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Calendar, Clock3, MapPin, Star, ChevronDown, Play, Users, Shield, Zap, Check, Lock, Smartphone, Target, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
+import { API, LOCATION_IDS } from "@/constants";
+
+interface PricingRule {
+  name: string;
+  hourlyRate: number;
+  startTime: string;
+  endTime: string;
+  daysOfWeek: string;
+}
 
 const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
+  const [isLoadingPricing, setIsLoadingPricing] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,6 +25,26 @@ const Index = () => {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Fetch pricing rules
+  useEffect(() => {
+    const fetchPricingRules = async () => {
+      try {
+        const response = await fetch(`${API.BASE_URL}/pricing-rules?locationId=${LOCATION_IDS.CHERRY_HILL}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch pricing rules');
+        }
+        const data = await response.json();
+        setPricingRules(data);
+      } catch (error) {
+        console.error('Error fetching pricing rules:', error);
+      } finally {
+        setIsLoadingPricing(false);
+      }
+    };
+
+    fetchPricingRules();
   }, []);
 
   const testimonialsData = [
@@ -39,8 +70,8 @@ const Index = () => {
 
   const pricingTiers = [
     {
-      name: "Off-Peak Hours",
-      price: "$25",
+      name: "Off-Peak Rate",
+      price: pricingRules.find(rule => rule.name === "Off-Peak Rate")?.hourlyRate,
       period: "per hour",
       description: "2AM-9AM",
       features: ["Full bay access", "All courses available", "Practice facilities", "Smart lock access"],
@@ -48,8 +79,8 @@ const Index = () => {
       icon: Clock3,
     },
     {
-      name: "Peak Hours",
-      price: "$35",
+      name: "Standard Rate",
+      price: pricingRules.find(rule => rule.name === "Standard Rate")?.hourlyRate,
       period: "per hour",
       description: "9AM-2AM",
       features: ["Full bay access", "All courses available", "Practice facilities", "Smart lock access"],
@@ -299,7 +330,7 @@ const Index = () => {
                   </CardHeader>
                   <CardContent className="flex flex-col flex-grow">
                     <div className="mb-6 text-center">
-                      <span className="text-4xl font-bold text-primary">{tier.price}</span>
+                      <span className="text-4xl font-bold text-primary">${tier.price}</span>
                       <span className="text-muted-foreground ml-1">{tier.period}</span>
                     </div>
                     <ul className="space-y-3 mb-6 flex-grow">

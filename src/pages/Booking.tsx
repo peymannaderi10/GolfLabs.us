@@ -22,6 +22,36 @@ export const formatDateToYYYYMMDD = (date: Date | null): string => {
   return format(date, 'yyyy-MM-dd');
 };
 
+// Convert UTC time string to local time string
+export const convertUTCToLocalTime = (timeString: string): string => {
+  try {
+    // Check if it's already a formatted time string (e.g., "2:00 PM")
+    if (timeString.includes('AM') || timeString.includes('PM')) {
+      return timeString; // Already formatted, return as is
+    }
+    
+    // Check if it's a full timestamp
+    if (timeString.includes('T') || timeString.includes('-')) {
+      const date = new Date(timeString);
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC' // Ensure we're working with UTC times
+      });
+    }
+    
+    // If it's just a time string (e.g., "14:00:00")
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const hour12 = hours % 12 || 12;
+    const period = hours < 12 ? 'AM' : 'PM';
+    return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  } catch (error) {
+    console.error("Error converting time:", error, timeString);
+    return timeString; // Return original on error
+  }
+};
+
 // Generate time slots from 00:00 to 23:45 with 15-minute intervals
 export const generateTimeSlots = (): string[] => {
   const slots = [];
@@ -51,9 +81,8 @@ export const timeToIndex = (timeString: string, timeSlots: string[]): number => 
 export interface Booking {
   id: string;
   bayId: string;
-  date?: string;
-  startTime: string;
-  endTime: string;
+  startTime: string; // UTC timestamp from backend
+  endTime: string;   // UTC timestamp from backend
 }
 
 export interface SelectionState {
@@ -97,7 +126,23 @@ const BookingPage: React.FC = () => {
         }
         
         const data = await response.json();
-        setBookings(data);
+        
+        // Safely convert time formats, handling both old and new formats
+        const formattedBookings = data.map((booking: any) => {
+          try {
+            return {
+              id: booking.id,
+              bayId: booking.bayId,
+              startTime: convertUTCToLocalTime(booking.startTime),
+              endTime: convertUTCToLocalTime(booking.endTime)
+            };
+          } catch (error) {
+            console.error("Error processing booking:", error, booking);
+            return booking; // Return original on error
+          }
+        });
+        
+        setBookings(formattedBookings);
       } catch (error) {
         console.error('Error fetching bookings:', error);
         setError('Failed to load bookings. Please try again.');

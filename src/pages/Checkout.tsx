@@ -38,6 +38,7 @@ const CheckoutPage = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!bookingDetails) {
@@ -45,44 +46,61 @@ const CheckoutPage = () => {
       return;
     }
 
-    // Create PaymentIntent as soon as the page loads
-    setIsLoading(true);
-    
-    const requestBody = {
-      amount: Math.round(bookingDetails.price * 100), // Convert to cents
-      bookingDetails: {
-        date: bookingDetails.selectedDate.toISOString().split('T')[0], // Just the date part YYYY-MM-DD
-        bayId: bookingDetails.bayId,
-        startTime: bookingDetails.startTime, // This should be in format "2:30 PM"
-        endTime: bookingDetails.endTime, // This should be in format "2:30 PM"
-        duration: bookingDetails.duration,
-        locationId: LOCATION_IDS.CHERRY_HILL,
-        userId: TEST_USER_ID,
+    const createBooking = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Phase 1: Create reservation
+        const reservationResponse = await fetch(`${API.BASE_URL}/bookings/reserve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: bookingDetails.selectedDate.toISOString().split('T')[0],
+            bayId: bookingDetails.bayId,
+            startTime: bookingDetails.startTime,
+            endTime: bookingDetails.endTime,
+            partySize: 1, // Default to 1 for now
+            userId: TEST_USER_ID,
+            locationId: LOCATION_IDS.CHERRY_HILL,
+            totalAmount: bookingDetails.price, // Add the total amount
+          }),
+        });
+
+        if (!reservationResponse.ok) {
+          const errorData = await reservationResponse.json();
+          if (errorData.error?.includes('conflicting key value') || errorData.error?.includes('overlapping')) {
+            throw new Error('This time slot is no longer available. Please select a different time.');
+          }
+          throw new Error('Failed to create reservation');
+        }
+
+        const reservationData = await reservationResponse.json();
+        setBookingId(reservationData.bookingId);
+
+        // Phase 2: Create payment intent
+        const paymentResponse = await fetch(`${API.BASE_URL}/bookings/${reservationData.bookingId}/create-payment-intent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: Math.round(bookingDetails.price * 100), // Convert to cents
+          }),
+        });
+
+        if (!paymentResponse.ok) {
+          throw new Error('Failed to create payment intent');
+        }
+
+        const paymentData = await paymentResponse.json();
+        setClientSecret(paymentData.clientSecret);
+      } catch (error) {
+        console.error('Error:', error);
+        setError(error instanceof Error ? error.message : 'An error occurred while setting up payment');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    console.log('Sending booking details:', requestBody); // Debug log
-
-    fetch(`${API.BASE_URL}/create-payment-intent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to create payment intent');
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setClientSecret(data.clientSecret);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-        setError(error.message || 'An error occurred while setting up payment');
-        setIsLoading(false);
-      });
+    createBooking();
   }, [bookingDetails]);
 
   if (!bookingDetails) {

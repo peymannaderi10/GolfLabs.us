@@ -44,7 +44,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   }, [startTime, endTime, timeSlots, timeIntervalMinutes]);
 
   const calculatePrice = useMemo(() => {
-    if (!startTime || !endTime) return 0;
+    if (!startTime || !endTime || !timeSlots.length) return 0;
     
     const startIndex = timeToIndex(startTime, timeSlots);
     const endIndex = timeToIndex(endTime, timeSlots);
@@ -54,9 +54,16 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
     // Only count slots up to but not including the end time
     for (let i = startIndex; i < endIndex; i++) {
       const timeSlot = timeSlots[i];
-      const hour = parseInt(timeSlot.split(':')[0]);
-      const isDayRate = hour >= PRICING.DAY_START && hour < PRICING.DAY_END;
-      const rate = isDayRate ? PRICING.DAY_RATE : PRICING.NIGHT_RATE;
+      if (!timeSlot) continue; // Skip if timeSlot is undefined
+      
+      const timeParts = timeSlot.split(':');
+      if (timeParts.length === 0) continue;
+      
+      const hour = parseInt(timeParts[0]);
+      if (isNaN(hour)) continue;
+      
+      const isDayRate = hour >= (PRICING?.DAY_START ?? 9) && hour < (PRICING?.DAY_END ?? 22);
+      const rate = isDayRate ? (PRICING?.DAY_RATE ?? 35) : (PRICING?.NIGHT_RATE ?? 25);
       totalPrice += (rate / 4); // Divide by 4 since we're working with 15-minute intervals
     }
 
@@ -77,6 +84,25 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
     return str;
   };
 
+  // Safe bay number getter to prevent undefined access
+  const getBayNumber = (bayId: string | null): string => {
+    if (!bayId || !BAY_NUMBERS || typeof BAY_NUMBERS !== 'object') {
+      return 'N/A';
+    }
+    const bayNumber = BAY_NUMBERS[bayId];
+    return bayNumber ? bayNumber.toString() : 'N/A';
+  };
+
+  // Memoize the minimized title to prevent unnecessary re-renders
+  const minimizedTitle = useMemo(() => {
+    if (isSelectionValid) {
+      const bayNumber = getBayNumber(bayId);
+      const duration = formatDuration(calculatedDurationMinutes);
+      return `Bay ${bayNumber} - ${duration}`;
+    }
+    return "Booking Details";
+  }, [isSelectionValid, bayId, calculatedDurationMinutes]);
+
   if (!selectedDate && !bayId && !startTime && !endTime) {
     // If nothing is selected at all, perhaps don't render the floating component yet,
     // or render it minimized by default with a generic message.
@@ -93,23 +119,29 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
     >
       <Card className={cn("shadow-2xl rounded-lg overflow-hidden bg-card/95 backdrop-blur-sm border-border", isMinimized ? "p-0" : "")}>
         <div className="flex items-center justify-between p-3 bg-muted/30 border-b border-border cursor-pointer" onClick={() => setIsMinimized(!isMinimized)}>
-            <div className="flex items-center">
-                {isMinimized && isSelectionValid && <CheckCircle className="h-5 w-5 text-primary mr-2 flex-shrink-0" />} 
-                {isMinimized && !isSelectionValid && <Info className="h-5 w-5 text-muted-foreground mr-2 flex-shrink-0" />} 
-                <span className="font-semibold text-sm text-foreground">
-                    {isMinimized ? (isSelectionValid ? `Bay ${BAY_NUMBERS[bayId]} - ${formatDuration(calculatedDurationMinutes)}` : "Booking Details") : "Booking Summary"}
-                </span>
-            </div>
-            <button 
-              type="button"
-              className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors focus:outline-none"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMinimized(!isMinimized);
-              }}
-            >
-                {isMinimized ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </button>
+          <div className="flex items-center">
+            {/* Simplified icon rendering to prevent reconciliation issues */}
+            {isMinimized && (
+              isSelectionValid ? (
+                <CheckCircle className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
+              ) : (
+                <Info className="h-5 w-5 text-muted-foreground mr-2 flex-shrink-0" />
+              )
+            )}
+            <span className="font-semibold text-sm text-foreground">
+              {isMinimized ? minimizedTitle : "Booking Summary"}
+            </span>
+          </div>
+          <button 
+            type="button"
+            className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors focus:outline-none"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMinimized(!isMinimized);
+            }}
+          >
+            {isMinimized ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
         </div>
 
         {!isMinimized && (
@@ -118,82 +150,108 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
               {selectedDate ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-2 flex-shrink-0" /> Date:
+                    <Calendar className="h-4 w-4 mr-2 flex-shrink-0" /> 
+                    <span>Date:</span>
                   </div>
-                  <span className="font-medium text-foreground">{selectedDate.toLocaleDateString()}</span>
+                  <span className="font-medium text-foreground">
+                    {selectedDate.toLocaleDateString()}
+                  </span>
                 </div>
               ) : (
-                <div className="flex items-center text-muted-foreground"><Calendar className="h-4 w-4 mr-2" /> Select a date.</div>
+                <div className="flex items-center text-muted-foreground">
+                  <Calendar className="h-4 w-4 mr-2" /> 
+                  <span>Select a date.</span>
+                </div>
               )}
 
               {bayId ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center text-muted-foreground">
-                    <MapPin className="h-4 w-4 mr-2 flex-shrink-0" /> Bay:
+                    <MapPin className="h-4 w-4 mr-2 flex-shrink-0" /> 
+                    <span>Bay:</span>
                   </div>
-                  <span className="font-medium text-foreground">Bay {BAY_NUMBERS[bayId]}</span>
+                  <span className="font-medium text-foreground">
+                    {`Bay ${getBayNumber(bayId)}`}
+                  </span>
                 </div>
               ) : (
-                <div className="flex items-center text-muted-foreground"><MapPin className="h-4 w-4 mr-2" /> Select a bay.</div>
+                <div className="flex items-center text-muted-foreground">
+                  <MapPin className="h-4 w-4 mr-2" /> 
+                  <span>Select a bay.</span>
+                </div>
               )}
 
               {startTime ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center text-muted-foreground">
-                    <Clock className="h-4 w-4 mr-2 flex-shrink-0" /> Start Time:
+                    <Clock className="h-4 w-4 mr-2 flex-shrink-0" /> 
+                    <span>Start Time:</span>
                   </div>
                   <span className="font-medium text-foreground">{startTime}</span>
                 </div>
               ) : (
-                <div className="flex items-center text-muted-foreground"><Clock className="h-4 w-4 mr-2" /> Select start time.</div>
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-2" /> 
+                  <span>Select start time.</span>
+                </div>
               )}
 
               {endTime ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center text-muted-foreground">
-                    <Clock className="h-4 w-4 mr-2 flex-shrink-0" /> End Time:
+                    <Clock className="h-4 w-4 mr-2 flex-shrink-0" /> 
+                    <span>End Time:</span>
                   </div>
                   <span className="font-medium text-foreground">{endTime}</span>
                 </div>
               ) : (
-                <div className="flex items-center text-muted-foreground"><Clock className="h-4 w-4 mr-2" /> Select end time.</div>
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-2" /> 
+                  <span>Select end time.</span>
+                </div>
               )}
 
               <div className="flex items-center justify-between border-t border-border pt-3 mt-3">
                 <div className="flex items-center text-muted-foreground font-semibold">
-                  <Clock className="h-4 w-4 mr-2 flex-shrink-0" /> Duration:
+                  <Clock className="h-4 w-4 mr-2 flex-shrink-0" /> 
+                  <span>Duration:</span>
                 </div>
-                <span className="font-bold text-primary text-base">{formatDuration(calculatedDurationMinutes)}</span>
+                <span className="font-bold text-primary text-base">
+                  {formatDuration(calculatedDurationMinutes)}
+                </span>
               </div>
 
               <div className="flex items-center justify-between border-t border-border pt-3">
                 <div className="flex items-center text-muted-foreground font-semibold">
-                  <DollarSign className="h-4 w-4 mr-2 flex-shrink-0" /> Total Price:
+                  <DollarSign className="h-4 w-4 mr-2 flex-shrink-0" /> 
+                  <span>Total Price:</span>
                 </div>
-                <span className="font-bold text-primary text-base">${calculatePrice.toFixed(2)}</span>
+                <span className="font-bold text-primary text-base">
+                  ${calculatePrice.toFixed(2)}
+                </span>
               </div>
             </CardContent>
 
             <div className="border-t border-border p-3 bg-muted/10">
-                <div className="flex gap-2">
-                    <Button 
-                        onClick={onClearSelection} 
-                        variant="outline" 
-                        className="w-full text-sm flex-1 group hover:border-destructive hover:bg-destructive/5"
-                        disabled={!bayId && !startTime && !endTime}
-                    >
-                        <Trash2 className="h-4 w-4 mr-1.5 text-muted-foreground group-hover:text-destructive transition-colors" />
-                        Clear
-                    </Button>
-                    <Button 
-                        onClick={onConfirmBooking} 
-                        disabled={!isSelectionValid}
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm flex-1 group"
-                    >
-                        <ShoppingCart className="h-4 w-4 mr-1.5 group-hover:animate-pulse" />
-                        Checkout
-                    </Button>
-                </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={onClearSelection} 
+                  variant="outline" 
+                  className="w-full text-sm flex-1 group hover:border-destructive hover:bg-destructive/5"
+                  disabled={!bayId && !startTime && !endTime}
+                >
+                  <Trash2 className="h-4 w-4 mr-1.5 text-muted-foreground group-hover:text-destructive transition-colors" />
+                  <span>Clear</span>
+                </Button>
+                <Button 
+                  onClick={onConfirmBooking} 
+                  disabled={!isSelectionValid}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm flex-1 group"
+                >
+                  <ShoppingCart className="h-4 w-4 mr-1.5 group-hover:animate-pulse" />
+                  <span>Checkout</span>
+                </Button>
+              </div>
             </div>
           </>
         )}
