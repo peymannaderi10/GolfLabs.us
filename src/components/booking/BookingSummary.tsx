@@ -4,104 +4,84 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MapPin, Calendar, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, ShoppingCart, Trash2, Info, DollarSign } from 'lucide-react';
 import type { SelectionState } from '@/pages/Booking'; // Import SelectionState
-import { timeToIndex } from '@/pages/Booking'; // Import timeToIndex
-import { BAY_NUMBERS, PRICING } from '@/constants';
+import { timeToIndex, TIME_INTERVAL_MINUTES } from '@/pages/Booking'; // Import timeToIndex and constants
+import { BAY_NUMBERS } from '@/constants';
 
 export interface BookingSummaryProps {
   selectedDate: Date | null;
   selection: SelectionState;
-  timeSlots: string[];
   onConfirmBooking: () => void;
   onClearSelection: () => void;
-  timeIntervalMinutes: number;
-  minSlotsDuration: number;
-  maxSlotsDuration: number;
+  priceDetails: { total: number; breakdown: any[] } | null;
+  isCalculatingPrice: boolean;
   className?: string;
 }
  
 export const BookingSummary: React.FC<BookingSummaryProps> = ({
   selectedDate,
   selection,
-  timeSlots,
   onConfirmBooking,
   onClearSelection,
-  timeIntervalMinutes,
-  // minSlotsDuration, // Potentially for display or validation within summary
-  // maxSlotsDuration,
+  priceDetails,
+  isCalculatingPrice,
   className,
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
 
   const { bayId, startTime, endTime } = selection;
 
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += TIME_INTERVAL_MINUTES) {
+        const h = hour.toString().padStart(2, '0');
+        const m = minute.toString().padStart(2, '0');
+        const hour12 = hour % 12 || 12;
+        const period = hour < 12 ? 'AM' : 'PM';
+        slots.push(`${hour12}:${m} ${period}`);
+      }
+    }
+    return slots;
+  }, []);
+
   const calculatedDurationMinutes = useMemo(() => {
     if (!startTime || !endTime) return 0;
     const startIndex = timeToIndex(startTime, timeSlots);
     const endIndex = timeToIndex(endTime, timeSlots);
     if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) return 0;
-    // Subtract 1 from the difference since we want the duration between slots, not including both slots
-    return (endIndex - startIndex) * timeIntervalMinutes;
-  }, [startTime, endTime, timeSlots, timeIntervalMinutes]);
-
-  const calculatePrice = useMemo(() => {
-    if (!startTime || !endTime || !timeSlots.length) return 0;
-    
-    const startIndex = timeToIndex(startTime, timeSlots);
-    const endIndex = timeToIndex(endTime, timeSlots);
-    if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) return 0;
-
-    let totalPrice = 0;
-    // Only count slots up to but not including the end time
-    for (let i = startIndex; i < endIndex; i++) {
-      const timeSlot = timeSlots[i];
-      if (!timeSlot) continue; // Skip if timeSlot is undefined
-      
-      const timeParts = timeSlot.split(':');
-      if (timeParts.length === 0) continue;
-      
-      const hour = parseInt(timeParts[0]);
-      if (isNaN(hour)) continue;
-      
-      const isDayRate = hour >= (PRICING?.DAY_START ?? 9) && hour < (PRICING?.DAY_END ?? 22);
-      const rate = isDayRate ? (PRICING?.DAY_RATE ?? 35) : (PRICING?.NIGHT_RATE ?? 25);
-      totalPrice += (rate / 4); // Divide by 4 since we're working with 15-minute intervals
-    }
-
-    return totalPrice;
+    return (endIndex - startIndex + 1) * TIME_INTERVAL_MINUTES;
   }, [startTime, endTime, timeSlots]);
 
   const isSelectionValid = useMemo(() => {
-    return !!(selectedDate && bayId && startTime && endTime && calculatedDurationMinutes > 0);
-  }, [selectedDate, bayId, startTime, endTime, calculatedDurationMinutes]);
+    return !!(selectedDate && bayId && startTime && endTime && calculatedDurationMinutes > 0 && priceDetails && !isCalculatingPrice);
+  }, [selectedDate, bayId, startTime, endTime, calculatedDurationMinutes, priceDetails, isCalculatingPrice]);
 
   const formatDuration = (minutes: number): string => {
-    if (minutes === 0) return "N/A";
+    if (minutes <= 0) return "N/A";
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
     let str = "";
-    if (h > 0) str += `${h} hour${h > 1 ? 's' : ''}`;
-    if (m > 0) str += `${h > 0 ? ' ' : ''}${m} min`;
+    if (h > 0) str += `${h}h`;
+    if (m > 0) str += `${h > 0 ? ' ' : ''}${m}m`;
     return str;
   };
 
-  // Safe bay number getter to prevent undefined access
   const getBayNumber = (bayId: string | null): string => {
     if (!bayId || !BAY_NUMBERS || typeof BAY_NUMBERS !== 'object') {
       return 'N/A';
     }
-    const bayNumber = BAY_NUMBERS[bayId];
-    return bayNumber ? bayNumber.toString() : 'N/A';
+    return BAY_NUMBERS[bayId]?.toString() ?? 'N/A';
   };
 
-  // Memoize the minimized title to prevent unnecessary re-renders
   const minimizedTitle = useMemo(() => {
     if (isSelectionValid) {
       const bayNumber = getBayNumber(bayId);
       const duration = formatDuration(calculatedDurationMinutes);
-      return `Bay ${bayNumber} - ${duration}`;
+      const price = priceDetails ? `$${(priceDetails.total / 100).toFixed(2)}` : '';
+      return `Bay ${bayNumber} - ${duration} - ${price}`;
     }
     return "Booking Details";
-  }, [isSelectionValid, bayId, calculatedDurationMinutes]);
+  }, [isSelectionValid, bayId, calculatedDurationMinutes, priceDetails]);
 
   if (!selectedDate && !bayId && !startTime && !endTime) {
     // If nothing is selected at all, perhaps don't render the floating component yet,
@@ -226,10 +206,49 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                   <DollarSign className="h-4 w-4 mr-2 flex-shrink-0" /> 
                   <span>Total Price:</span>
                 </div>
-                <span className="font-bold text-primary text-base">
-                  ${calculatePrice.toFixed(2)}
-                </span>
+                {isCalculatingPrice ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                ) : (
+                    <span className="font-bold text-primary text-base">
+                    {priceDetails ? `$${(priceDetails.total / 100).toFixed(2)}` : '$0.00'}
+                    </span>
+                )}
               </div>
+
+              {priceDetails && priceDetails.breakdown && priceDetails.breakdown.length > 0 && (
+                <div className="space-y-2 border-t border-border pt-3">
+                  <div className="text-sm font-semibold text-muted-foreground">Price Breakdown:</div>
+                  {priceDetails.breakdown.map((segment, index) => {
+                    // Convert UTC times to local time
+                    const startDate = new Date(segment.start);
+                    const endDate = new Date(segment.end);
+                    
+                    // Format times in 12-hour format
+                    const startTime = startDate.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true,
+                      timeZone: 'UTC' // Keep UTC for display
+                    });
+                    const endTime = endDate.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true,
+                      timeZone: 'UTC' // Keep UTC for display
+                    });
+
+                    return (
+                      <div key={index} className="flex justify-between items-center text-sm">
+                        <div className="flex items-center">
+                          <span className="text-muted-foreground">{segment.rateName}:</span>
+                          <span className="ml-2 text-foreground">{startTime} - {endTime}</span>
+                        </div>
+                        <span className="font-medium">${(segment.rate / 100).toFixed(2)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
 
             <div className="border-t border-border p-3 bg-muted/10">

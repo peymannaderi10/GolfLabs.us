@@ -103,6 +103,8 @@ const BookingPage: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [priceDetails, setPriceDetails] = useState<{ total: number; breakdown: any[] } | null>(null);
+  const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
 
   const navigate = useNavigate();
   
@@ -153,6 +155,69 @@ const BookingPage: React.FC = () => {
     
     fetchBookings();
   }, [selectedDate]);
+
+  const createISOForBackend = (date: Date, timeString: string): string => {
+    const [time, period] = timeString.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    const isPM = period.toUpperCase() === 'PM';
+    let hour24 = hours;
+    if (isPM && hours < 12) {
+      hour24 += 12;
+    }
+    if (!isPM && hours === 12) { // Midnight case (12 AM)
+      hour24 = 0;
+    }
+
+    const isoDate = new Date(date);
+    // We use UTC hours because the backend expects UTC timestamps
+    isoDate.setUTCHours(hour24, minutes, 0, 0);
+    return isoDate.toISOString();
+  };
+
+  useEffect(() => {
+      const calculatePrice = async () => {
+          if (selection.startTime && selection.endTime && selectedDate) {
+              setIsCalculatingPrice(true);
+              setPriceDetails(null);
+              setError(null);
+
+              try {
+                  const startTimeISO = createISOForBackend(selectedDate, selection.startTime);
+                  const endTimeISO = createISOForBackend(selectedDate, selection.endTime);
+
+                  const response = await fetch(`${API.BASE_URL}/calculate-price`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                          locationId: LOCATION_IDS.CHERRY_HILL,
+                          startTime: startTimeISO,
+                          endTime: endTimeISO,
+                      }),
+                  });
+
+                  if (!response.ok) {
+                      const err = await response.json();
+                      throw new Error(err.error || 'Failed to calculate price');
+                  }
+
+                  const data = await response.json();
+                  setPriceDetails(data);
+
+              } catch (err: any) {
+                  console.error('Error calculating price:', err);
+                  setError(err.message);
+                  setPriceDetails(null);
+              } finally {
+                  setIsCalculatingPrice(false);
+              }
+          } else {
+            // Clear price if selection is incomplete
+            setPriceDetails(null);
+          }
+      };
+
+      calculatePrice();
+  }, [selection.startTime, selection.endTime, selectedDate]);
 
   // Check if a slot is booked
   const isSlotBooked = useCallback((bayId: string, timeSlot: string): boolean => {
@@ -234,21 +299,16 @@ const BookingPage: React.FC = () => {
       return;
     }
     
+    if (isCalculatingPrice || !priceDetails) {
+        setError("Price is still being calculated or an error occurred. Please wait.");
+        return;
+    }
+
     // Calculate duration
     const startIndex = timeToIndex(selection.startTime, timeSlots);
     const endIndex = timeToIndex(selection.endTime, timeSlots);
-    const durationMinutes = (endIndex - startIndex) * TIME_INTERVAL_MINUTES;
+    const durationMinutes = (endIndex - startIndex + 1) * TIME_INTERVAL_MINUTES; // +1 to include the end slot
     const duration = `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
-    
-    // Calculate price
-    let totalPrice = 0;
-    for (let i = startIndex; i < endIndex; i++) {
-      const timeSlot = timeSlots[i];
-      const hour = parseInt(timeSlot.split(':')[0]);
-      const isDayRate = hour >= 9 && hour < 22; // Day rate from 9am to 10pm
-      const rate = isDayRate ? 35 : 25; // $35/hr day rate, $25/hr night rate
-      totalPrice += (rate / 4); // Divide by 4 since we're working with 15-minute intervals
-    }
     
     // Prepare booking details for checkout
     const bookingDetails = {
@@ -257,13 +317,13 @@ const BookingPage: React.FC = () => {
       startTime: selection.startTime,
       endTime: selection.endTime,
       duration,
-      price: totalPrice
+      price: priceDetails.total / 100 // convert cents to dollars
     };
     
     // Navigate to checkout page with booking details
     navigate('/checkout', { state: { bookingDetails } });
     
-  }, [selection, selectedDate, timeSlots, navigate]);
+  }, [selection, selectedDate, timeSlots, navigate, priceDetails, isCalculatingPrice]);
 
   const handleClearSelection = useCallback(() => {
     setSelection({ bayId: null, startTime: null, endTime: null });
@@ -357,14 +417,12 @@ const BookingPage: React.FC = () => {
           </div>
 
         <BookingSummary 
-                    selectedDate={selectedDate}
+          selectedDate={selectedDate}
           selection={selection}
-          timeSlots={timeSlots}
           onConfirmBooking={handleBookingConfirm}
           onClearSelection={handleClearSelection}
-          timeIntervalMinutes={TIME_INTERVAL_MINUTES}
-          minSlotsDuration={MIN_SLOTS_DURATION}
-          maxSlotsDuration={MAX_SLOTS_DURATION}
+          priceDetails={priceDetails}
+          isCalculatingPrice={isCalculatingPrice}
         />
       </div>
     </div>
