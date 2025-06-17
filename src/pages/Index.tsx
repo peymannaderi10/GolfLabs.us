@@ -6,6 +6,7 @@ import { Calendar, Clock3, MapPin, Star, ChevronDown, Play, Users, Shield, Zap, 
 import { Link } from "react-router-dom";
 import { API, LOCATION_IDS } from "@/constants";
 import { UserNav } from "@/components/UserNav";
+import { BookNowButton } from "@/components/BookNowButton";
 
 interface PricingRule {
   name: string;
@@ -215,12 +216,11 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
             >
-              <Link to="/booking">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-4 text-lg btn-hover">
-                  <Calendar className="mr-2 h-5 w-5" />
-                  Book Your Bay
-                </Button>
-              </Link>
+              <BookNowButton 
+                size="lg" 
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-4 text-lg btn-hover"
+                text="Book Your Bay"
+              />
               <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-4 text-lg btn-hover">
                 <Play className="mr-2 h-5 w-5" />
                 Watch Demo
@@ -638,12 +638,11 @@ const Index = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Link to="/booking">
-              <Button size="lg" className="bg-background hover:bg-background/90 text-foreground font-semibold px-12 py-4 text-lg">
-                <Calendar className="mr-2 h-6 w-6" />
-                Book Your Session
-              </Button>
-            </Link>
+            <BookNowButton
+              size="lg" 
+              className="bg-background hover:bg-background/90 text-foreground font-semibold px-12 py-4 text-lg"
+              text="Book Your Session"
+            />
           </motion.div>
         </div>
       </motion.section>

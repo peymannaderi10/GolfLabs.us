@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,18 +18,27 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface LocationState {
+  from?: string;
+}
+
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
-  // If user is already logged in, redirect to home page
+  // Get the intended destination from location state
+  const state = location.state as LocationState;
+  const from = state?.from || '/';
+
+  // If user is already logged in, redirect to intended destination
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate(from);
     }
-  }, [user, navigate]);
+  }, [user, navigate, from]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

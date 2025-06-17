@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, LogOut } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { BookNowButton } from "./BookNowButton";
 
 export function UserNav() {
   const { user, profile, signOut } = useAuth();
@@ -43,11 +44,7 @@ export function UserNav() {
             Login
           </Button>
         </Link>
-        <Link to="/booking">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold btn-hover">
-            Book Now
-          </Button>
-        </Link>
+        <BookNowButton className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold btn-hover" />
       </div>
     );
   }
@@ -78,9 +75,9 @@ export function UserNav() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link to="/profile">
+            <Link to="/dashboard">
               <User className="mr-2 h-4 w-4" />
-              Profile
+              Dashboard
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -90,11 +87,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Link to="/booking">
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold btn-hover">
-          Book Now
-        </Button>
-      </Link>
+      <BookNowButton className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold btn-hover" />
     </div>
   );
 } 

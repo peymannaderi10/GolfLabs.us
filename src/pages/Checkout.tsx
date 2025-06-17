@@ -8,7 +8,9 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { StripeCheckoutForm } from '../components/checkout/StripeCheckoutForm';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { BAY_NUMBERS, LOCATION_IDS, TEST_USER_ID, API } from '@/constants';
+import { BAY_NUMBERS, LOCATION_IDS, API } from '@/constants';
+import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
 
 // Helper function to parse time string (e.g., "2:30 PM") and return hours and minutes
 const parseTimeString = (timeStr: string): { hours: number; minutes: number } => {
@@ -34,6 +36,7 @@ interface BookingDetails {
 const CheckoutPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const bookingDetails = location.state?.bookingDetails as BookingDetails;
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +44,7 @@ const CheckoutPage = () => {
   const [bookingId, setBookingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!bookingDetails) {
+    if (!bookingDetails || !user) {
       setIsLoading(false);
       return;
     }
@@ -55,12 +58,12 @@ const CheckoutPage = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            date: bookingDetails.selectedDate.toISOString().split('T')[0],
+            date: format(bookingDetails.selectedDate, 'yyyy-MM-dd'),
             bayId: bookingDetails.bayId,
             startTime: bookingDetails.startTime,
             endTime: bookingDetails.endTime,
             partySize: 1, // Default to 1 for now
-            userId: TEST_USER_ID,
+            userId: user.id, // Use authenticated user's ID
             locationId: LOCATION_IDS.CHERRY_HILL,
             totalAmount: bookingDetails.price, // Add the total amount
           }),
@@ -68,10 +71,10 @@ const CheckoutPage = () => {
 
         if (!reservationResponse.ok) {
           const errorData = await reservationResponse.json();
-          if (errorData.error?.includes('conflicting key value') || errorData.error?.includes('overlapping')) {
+          if (reservationResponse.status === 409 || errorData.error?.includes('no longer available')) {
             throw new Error('This time slot is no longer available. Please select a different time.');
           }
-          throw new Error('Failed to create reservation');
+          throw new Error(errorData.error || 'Failed to create reservation');
         }
 
         const reservationData = await reservationResponse.json();
@@ -101,7 +104,7 @@ const CheckoutPage = () => {
     };
 
     createBooking();
-  }, [bookingDetails]);
+  }, [bookingDetails, user]);
 
   if (!bookingDetails) {
     return (
