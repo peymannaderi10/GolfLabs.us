@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Calendar, Clock3, MapPin, Star, ChevronDown, Play, Users, Shield, Zap, Check, Lock, Smartphone, Target, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
 import { API, LOCATION_IDS } from "@/constants";
+import { UserNav } from "@/components/UserNav";
 
 interface PricingRule {
   name: string;
@@ -170,12 +171,9 @@ const Index = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex items-center space-x-4"
             >
-              <Link to="/booking">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold btn-hover">
-                  Book Now
-                </Button>
-              </Link>
+              <UserNav />
             </motion.div>
           </div>
         </div>
