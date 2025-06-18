@@ -4,6 +4,7 @@ import { Navigate, Link, useNavigate } from "react-router-dom";
 import { Calendar, Clock, User, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
+import { API } from '@/constants';
 
 // Components
 import { Button } from "@/components/ui/button";
@@ -21,8 +22,6 @@ interface Booking {
   bayName: string;
   bayNumber: number;
 }
-
-const API_BASE_URL = "http://localhost:4242";
 
 const BookingCard = ({ booking }: { booking: Booking }) => (
   <Card className="mb-4">
@@ -57,7 +56,7 @@ const BookingsList = ({ type }: { type: 'upcoming' | 'past' }) => {
       setIsLoading(true);
       // Convert 'upcoming' to 'future' for the API endpoint
       const endpoint = type === 'upcoming' ? 'future' : 'past';
-      fetch(`${API_BASE_URL}/users/${user.id}/bookings/${endpoint}`)
+      fetch(`${API.BASE_URL}/users/${user.id}/bookings/${endpoint}`)
         .then(res => res.json())
         .then((data) => {
           if (!data.error) {

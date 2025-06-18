@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { API } from '@/constants';
 
 interface StripeCheckoutFormProps {
   amount: number;
@@ -46,7 +47,7 @@ export function StripeCheckoutForm({ amount, clientSecret, onSuccess }: StripeCh
 
     try {
       // Update payment intent with user information
-      await fetch('http://localhost:4242/update-payment-intent', {
+      await fetch(`${API.BASE_URL}/update-payment-intent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
