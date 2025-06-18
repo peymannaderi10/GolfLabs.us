@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode
 } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -38,6 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  // Use ref to prevent duplicate profile creation during signup
+  const isCreatingProfile = useRef<boolean>(false);
 
   // Cache profile in localStorage
   const cacheProfile = (profileData: UserProfile) => {
@@ -56,7 +60,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const profileData = JSON.parse(cached) as UserProfile;
         // Only return cached profile if it's for the current user
         if (profileData.id === userId) {
-          console.log('Profile loaded from cache:', profileData.full_name);
           return profileData;
         }
       }
@@ -78,15 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch user profile from database
   const fetchProfile = async (userId: string) => {
     try {
-      console.log('Fetching profile from database for user:', userId);
-      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
         .single();
-
-      console.log('Profile query completed:', { data: data?.full_name, error });
 
       if (error) {
         console.error('Error fetching user profile:', error);
@@ -95,12 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data) {
         const profileData = data as UserProfile;
-        console.log('Profile loaded from database:', profileData.full_name);
         setProfile(profileData);
         // Cache the profile for future use
         cacheProfile(profileData);
-      } else {
-        console.log('No profile data returned');
       }
     } catch (error) {
       console.error('Error in fetchProfile function:', error);
@@ -113,11 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Initialize auth state
     const initializeAuth = async () => {
       try {
-        console.log('Initializing auth...');
         // Get current session
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
-        console.log('Initial session check:', { session: currentSession?.user?.id, error });
         
         if (error) {
           console.error('Error getting session:', error);
@@ -129,8 +122,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // If we have a session, load profile
           if (currentSession?.user) {
-            console.log('Found existing session for user:', currentSession.user.id);
-            
             // First try to load from cache
             const cachedProfile = loadCachedProfile(currentSession.user.id);
             if (cachedProfile) {
@@ -140,7 +131,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               await fetchProfile(currentSession.user.id);
             }
           } else {
-            console.log('No existing session found');
             // Clear any cached profile if no session
             clearProfileCache();
           }
@@ -149,7 +139,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Error initializing auth:', error);
       } finally {
         if (mounted) {
-          console.log('Auth initialization complete, setting loading to false');
           setIsLoading(false);
         }
       }
@@ -159,14 +148,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log('Auth state change:', event, newSession?.user?.id);
-      
       if (!mounted) return;
 
       setSession(newSession);
       setUser(newSession?.user || null);
       
       if (event === 'SIGNED_IN' && newSession?.user) {
+        // Skip profile operations if we're currently in the signup process
+        if (isCreatingProfile.current) {
+          return;
+        }
+        
         // Check cache first, then fetch from database if needed
         const cachedProfile = loadCachedProfile(newSession.user.id);
         if (cachedProfile) {
@@ -176,7 +168,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await fetchProfile(newSession.user.id);
         }
       } else if (event === 'SIGNED_OUT') {
-        console.log('User signed out, clearing profile and cache...');
         setProfile(null);
         clearProfileCache();
       }
@@ -204,6 +195,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sign up with email and password
   const signUp = async (email: string, password: string, userData: Partial<UserProfile>) => {
     try {
+      // Set flag to prevent duplicate profile creation
+      isCreatingProfile.current = true;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -216,27 +210,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!error && data.user) {
-        // Create profile in user_profiles table
-        const { error: profileError } = await supabase
+        // First check if profile already exists (in case of database trigger)
+        const { data: existingProfile, error: checkError } = await supabase
           .from('user_profiles')
-          .insert([
-            {
-              id: data.user.id,
-              email: email,
-              full_name: userData.full_name,
-              phone: userData.phone,
-            }
-          ]);
+          .select('id')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (checkError && checkError.code !== 'PGRST116') {
+          // PGRST116 = "The result contains 0 rows" - this is expected if no profile exists
+          console.error('Error checking existing profile:', checkError);
+          isCreatingProfile.current = false;
+          return { error: checkError };
+        }
+        
+        if (!existingProfile) {
+          // Create profile in user_profiles table
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert([
+              {
+                id: data.user.id,
+                email: email,
+                full_name: userData.full_name,
+                phone: userData.phone,
+              }
+            ]);
 
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          return { error: profileError };
+          if (profileError) {
+            console.error('Error creating user profile:', profileError);
+            isCreatingProfile.current = false;
+            return { error: profileError };
+          }
         }
       }
+
+      // Clear the flag after a short delay to allow auth state changes to complete
+      setTimeout(() => {
+        isCreatingProfile.current = false;
+      }, 2000);
 
       return { error };
     } catch (error) {
       console.error('Error during sign up:', error);
+      isCreatingProfile.current = false;
       return { error };
     }
   };
