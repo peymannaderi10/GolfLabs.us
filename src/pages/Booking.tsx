@@ -52,7 +52,7 @@ export const convertUTCToLocalTime = (timeString: string): string => {
   }
 };
 
-// Generate time slots from 00:00 to 23:45 with 15-minute intervals
+// Generate time slots from 00:00 to 23:45 with 15-minute intervals, plus 23:59
 export const generateTimeSlots = (): string[] => {
   const slots = [];
   for (let hour = 0; hour < 24; hour++) {
@@ -69,12 +69,49 @@ export const generateTimeSlots = (): string[] => {
       slots.push(time12);
     }
   }
+  
+  // Add the final slot at 11:59 PM
+  slots.push('11:59 PM');
+  
   return slots;
 };
 
 // Convert time to index in timeSlots array
 export const timeToIndex = (timeString: string, timeSlots: string[]): number => {
   return timeSlots.findIndex(t => t === timeString);
+};
+
+// Helper function to check if a time slot is in the past for the current day
+const isTimeSlotInPast = (selectedDate: Date, timeSlot: string): boolean => {
+  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const selectedDay = new Date(selectedDate);
+  selectedDay.setHours(0, 0, 0, 0);
+  
+  // If the selected date is not today, don't restrict
+  if (selectedDay.getTime() !== today.getTime()) {
+    return false;
+  }
+  
+  // Parse the time slot (e.g., "8:00 PM" or "8:15 AM")
+  const [time, period] = timeSlot.split(' ');
+  const [hours, minutes] = time.split(':').map(Number);
+  
+  let hour24 = hours;
+  if (period === 'PM' && hours !== 12) {
+    hour24 = hours + 12;
+  } else if (period === 'AM' && hours === 12) {
+    hour24 = 0;
+  }
+  
+  // Create a date object for the time slot on the selected date
+  const slotTime = new Date(selectedDate);
+  slotTime.setHours(hour24, minutes, 0, 0);
+  
+  // Check if the slot time is before the current time
+  return slotTime < now;
 };
 
 // --- Interfaces ---
@@ -110,6 +147,11 @@ const BookingPage: React.FC = () => {
   
   // Time slots generation (00:00 to 23:45 in 15-minute intervals)
   const timeSlots = useMemo(() => generateTimeSlots(), []);
+
+  // Filter out past time slots for the current day
+  const availableTimeSlots = useMemo(() => {
+    return timeSlots.filter(timeSlot => !isTimeSlotInPast(selectedDate, timeSlot));
+  }, [timeSlots, selectedDate]);
 
   // Fetch bookings when the selected date changes
   useEffect(() => {
@@ -221,14 +263,14 @@ const BookingPage: React.FC = () => {
 
   // Check if a slot is booked
   const isSlotBooked = useCallback((bayId: string, timeSlot: string): boolean => {
-    const targetSlotIndex = timeToIndex(timeSlot, timeSlots);
+    const targetSlotIndex = timeToIndex(timeSlot, availableTimeSlots);
     return bookings.some(booking => {
       if (booking.bayId !== bayId) return false;
-      const bookingStartIndex = timeToIndex(booking.startTime, timeSlots);
-      const bookingEndIndex = timeToIndex(booking.endTime, timeSlots);
+      const bookingStartIndex = timeToIndex(booking.startTime, availableTimeSlots);
+      const bookingEndIndex = timeToIndex(booking.endTime, availableTimeSlots);
       return targetSlotIndex >= bookingStartIndex && targetSlotIndex <= bookingEndIndex;
     });
-  }, [bookings, timeSlots]);
+  }, [bookings, availableTimeSlots]);
 
   const handleSlotClick = useCallback((bayId: string, clickedTimeSlot: string) => {
     setError(null); // Clear previous errors
@@ -238,7 +280,7 @@ const BookingPage: React.FC = () => {
       return;
     }
 
-    const clickedSlotIndex = timeToIndex(clickedTimeSlot, timeSlots);
+    const clickedSlotIndex = timeToIndex(clickedTimeSlot, availableTimeSlots);
 
     setSelection(prevSelection => {
       // Case 1: No start time selected OR different bay selected
@@ -247,7 +289,7 @@ const BookingPage: React.FC = () => {
       }
 
       // Case 2: Same bay selected
-      const currentStartTimeIndex = timeToIndex(prevSelection.startTime!, timeSlots);
+      const currentStartTimeIndex = timeToIndex(prevSelection.startTime!, availableTimeSlots);
 
       // Case 2a: Clicked slot is the same as current start time (deselect/reset start)
       if (clickedSlotIndex === currentStartTimeIndex) {
@@ -266,7 +308,7 @@ const BookingPage: React.FC = () => {
       // Validate range: no conflicts and within duration limits
       let hasConflict = false;
       for (let i = currentStartTimeIndex; i <= potentialEndTimeIndex; i++) {
-        const slotInCheck = timeSlots[i];
+        const slotInCheck = availableTimeSlots[i];
         if (i > currentStartTimeIndex && isSlotBooked(bayId, slotInCheck)) {
           hasConflict = true;
           break;
@@ -278,12 +320,16 @@ const BookingPage: React.FC = () => {
         return { bayId, startTime: clickedTimeSlot, endTime: null };
       }
 
-      const numberOfSlotsSelected = potentialEndTimeIndex - currentStartTimeIndex + 1;
-      if (numberOfSlotsSelected < MIN_SLOTS_DURATION) {
+      // Calculate the actual time duration (not slot count) for validation
+      // This matches the calculation in handleBookingConfirm
+      const timeDifferenceSlots = potentialEndTimeIndex - currentStartTimeIndex;
+      const durationMinutes = timeDifferenceSlots * TIME_INTERVAL_MINUTES;
+      
+      if (durationMinutes < MIN_SLOTS_DURATION * TIME_INTERVAL_MINUTES) {
          setError("Selection is too short. Minimum booking is 15 minutes.");
          return { bayId, startTime: clickedTimeSlot, endTime: null };
       }
-      if (numberOfSlotsSelected > MAX_SLOTS_DURATION) {
+      if (durationMinutes > MAX_SLOTS_DURATION * TIME_INTERVAL_MINUTES) {
         setError(`Selection is too long. Maximum booking is 4 hours (${MAX_SLOTS_DURATION * TIME_INTERVAL_MINUTES / 60} hours).`);
         return { bayId, startTime: clickedTimeSlot, endTime: null };
       }
@@ -291,7 +337,7 @@ const BookingPage: React.FC = () => {
       // Valid selection
       return { ...prevSelection, endTime: potentialEndTime };
     });
-  }, [timeSlots, isSlotBooked]);
+  }, [availableTimeSlots, isSlotBooked]);
 
   const handleBookingConfirm = useCallback(() => {
     if (!selection.bayId || !selection.startTime || !selection.endTime || !selectedDate) {
@@ -304,10 +350,14 @@ const BookingPage: React.FC = () => {
         return;
     }
 
-    // Calculate duration
-    const startIndex = timeToIndex(selection.startTime, timeSlots);
-    const endIndex = timeToIndex(selection.endTime, timeSlots);
-    const durationMinutes = (endIndex - startIndex + 1) * TIME_INTERVAL_MINUTES; // +1 to include the end slot
+    // Calculate duration - properly calculate time difference between start and end
+    const startIndex = timeToIndex(selection.startTime, availableTimeSlots);
+    const endIndex = timeToIndex(selection.endTime, availableTimeSlots);
+    
+    // For duration calculation, we need the actual time difference, not slot count
+    // If someone selects 9:00 PM to 9:15 PM, that's 15 minutes (not 30)
+    // If someone selects 9:00 PM to 9:30 PM, that's 30 minutes (not 45)
+    const durationMinutes = (endIndex - startIndex) * TIME_INTERVAL_MINUTES;
     const duration = `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`;
     
     // Prepare booking details for checkout
@@ -323,7 +373,7 @@ const BookingPage: React.FC = () => {
     // Navigate to checkout page with booking details
     navigate('/checkout', { state: { bookingDetails } });
     
-  }, [selection, selectedDate, timeSlots, navigate, priceDetails, isCalculatingPrice]);
+  }, [selection, selectedDate, availableTimeSlots, navigate, priceDetails, isCalculatingPrice]);
 
   const handleClearSelection = useCallback(() => {
     setSelection({ bayId: null, startTime: null, endTime: null });
@@ -403,7 +453,7 @@ const BookingPage: React.FC = () => {
               {selectedDate ? (
                 <BayTimeTable
                   bayCount={MAX_BAYS}
-                  timeSlots={timeSlots}
+                  timeSlots={availableTimeSlots}
                   bookings={bookings}
                   selection={selection}
                   selectedDate={selectedDate}

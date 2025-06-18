@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MapPin, Calendar, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, ShoppingCart, Trash2, Info, DollarSign } from 'lucide-react';
 import type { SelectionState } from '@/pages/Booking'; // Import SelectionState
-import { timeToIndex, TIME_INTERVAL_MINUTES } from '@/pages/Booking'; // Import timeToIndex and constants
+import { timeToIndex, TIME_INTERVAL_MINUTES, generateTimeSlots } from '@/pages/Booking'; // Import generateTimeSlots
 import { BAY_NUMBERS } from '@/constants';
 
 export interface BookingSummaryProps {
@@ -30,26 +30,15 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
 
   const { bayId, startTime, endTime } = selection;
 
-  const timeSlots = useMemo(() => {
-    const slots = [];
-    for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += TIME_INTERVAL_MINUTES) {
-        const h = hour.toString().padStart(2, '0');
-        const m = minute.toString().padStart(2, '0');
-        const hour12 = hour % 12 || 12;
-        const period = hour < 12 ? 'AM' : 'PM';
-        slots.push(`${hour12}:${m} ${period}`);
-      }
-    }
-    return slots;
-  }, []);
+  // Use the same time slot generation as the main booking page
+  const timeSlots = useMemo(() => generateTimeSlots(), []);
 
   const calculatedDurationMinutes = useMemo(() => {
     if (!startTime || !endTime) return 0;
     const startIndex = timeToIndex(startTime, timeSlots);
     const endIndex = timeToIndex(endTime, timeSlots);
     if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) return 0;
-    return (endIndex - startIndex + 1) * TIME_INTERVAL_MINUTES;
+    return (endIndex - startIndex) * TIME_INTERVAL_MINUTES;
   }, [startTime, endTime, timeSlots]);
 
   const isSelectionValid = useMemo(() => {
