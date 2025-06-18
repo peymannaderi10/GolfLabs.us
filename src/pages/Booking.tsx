@@ -406,6 +406,7 @@ const BookingPage: React.FC = () => {
                   timeSlots={timeSlots}
                   bookings={bookings}
                   selection={selection}
+                  selectedDate={selectedDate}
                   onSlotClick={handleSlotClick}
                   isSlotBooked={isSlotBooked}
                 />

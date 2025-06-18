@@ -8,14 +8,49 @@ interface BayTimeTableProps {
   timeSlots: string[];
   bookings: Booking[];
   selection: SelectionState;
+  selectedDate: Date;
   onSlotClick: (bayId: string, timeSlot: string) => void;
   isSlotBooked: (bayId: string, timeSlot: string) => boolean;
 }
+
+// Helper function to check if a time slot is in the past for the current day
+const isTimeSlotInPast = (selectedDate: Date, timeSlot: string): boolean => {
+  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const selectedDay = new Date(selectedDate);
+  selectedDay.setHours(0, 0, 0, 0);
+  
+  // If the selected date is not today, don't restrict
+  if (selectedDay.getTime() !== today.getTime()) {
+    return false;
+  }
+  
+  // Parse the time slot (e.g., "8:00 PM" or "8:15 AM")
+  const [time, period] = timeSlot.split(' ');
+  const [hours, minutes] = time.split(':').map(Number);
+  
+  let hour24 = hours;
+  if (period === 'PM' && hours !== 12) {
+    hour24 = hours + 12;
+  } else if (period === 'AM' && hours === 12) {
+    hour24 = 0;
+  }
+  
+  // Create a date object for the time slot on the selected date
+  const slotTime = new Date(selectedDate);
+  slotTime.setHours(hour24, minutes, 0, 0);
+  
+  // Check if the slot time is before the current time
+  return slotTime < now;
+};
 
 export const BayTimeTable: React.FC<BayTimeTableProps> = ({
   bayCount,
   timeSlots,
   selection,
+  selectedDate,
   onSlotClick,
   isSlotBooked,
 }) => {
@@ -23,6 +58,11 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
   const getSlotStatus = (bayId: string, timeSlot: string, selectionState: SelectionState, timeSlotsArray: string[]) => {
     if (isSlotBooked(bayId, timeSlot)) {
       return 'booked';
+    }
+
+    // Check if the time slot is in the past for the current day
+    if (isTimeSlotInPast(selectedDate, timeSlot)) {
+      return 'past';
     }
 
     if (selectionState.bayId === bayId) {
@@ -78,6 +118,11 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
                     contentStyles = cn(contentStyles, 'text-destructive dark:text-destructive/90');
                     cellContent = <span className="text-xs font-medium">Booked</span>;
                     break;
+                  case 'past':
+                    cellStyles = cn(cellStyles, 'bg-muted/60 dark:bg-muted/40 cursor-not-allowed border-muted/50');
+                    contentStyles = cn(contentStyles, 'text-muted-foreground/60');
+                    cellContent = <span className="text-xs">Past</span>;
+                    break;
                   case 'selected-start':
                     cellStyles = cn(cellStyles, 'bg-primary ring-2 ring-primary-focus ring-offset-1');
                     contentStyles = cn(contentStyles, 'text-primary-foreground font-semibold');
@@ -103,9 +148,9 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
                     <button 
                       type="button"
                       className={contentStyles}
-                      onClick={() => status !== 'booked' && onSlotClick(currentBayId, timeSlot)}
-                      disabled={status === 'booked'}
-                      aria-label={`Select Bay ${bayNumber} at ${timeSlot}${status === 'booked' ? ' (Booked)' : ''}`}
+                      onClick={() => (status !== 'booked' && status !== 'past') && onSlotClick(currentBayId, timeSlot)}
+                      disabled={status === 'booked' || status === 'past'}
+                      aria-label={`Select Bay ${bayNumber} at ${timeSlot}${status === 'booked' ? ' (Booked)' : status === 'past' ? ' (Past Time)' : ''}`}
                     >
                       {cellContent}
                     </button>
