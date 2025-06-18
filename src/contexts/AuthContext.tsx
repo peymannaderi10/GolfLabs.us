@@ -39,71 +39,164 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    // Get current session and set up subscription
-    const getInitialSession = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Check for active session
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        setSession(currentSession);
-        
-        if (currentSession?.user) {
-          setUser(currentSession.user);
-          await fetchProfile(currentSession.user.id);
+  // Cache profile in localStorage
+  const cacheProfile = (profileData: UserProfile) => {
+    try {
+      localStorage.setItem('user_profile', JSON.stringify(profileData));
+    } catch (error) {
+      console.error('Error caching profile:', error);
+    }
+  };
+
+  // Load profile from cache
+  const loadCachedProfile = (userId: string): UserProfile | null => {
+    try {
+      const cached = localStorage.getItem('user_profile');
+      if (cached) {
+        const profileData = JSON.parse(cached) as UserProfile;
+        // Only return cached profile if it's for the current user
+        if (profileData.id === userId) {
+          console.log('Profile loaded from cache:', profileData.full_name);
+          return profileData;
         }
-      } catch (error) {
-        console.error('Error retrieving session:', error);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error loading cached profile:', error);
+    }
+    return null;
+  };
 
-    getInitialSession();
+  // Clear profile cache
+  const clearProfileCache = () => {
+    try {
+      localStorage.removeItem('user_profile');
+    } catch (error) {
+      console.error('Error clearing profile cache:', error);
+    }
+  };
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user || null);
-      
-      if (newSession?.user) {
-        await fetchProfile(newSession.user.id);
-      } else {
-        setProfile(null);
-      }
-    });
-
-    // Cleanup function
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  // Fetch user profile
+  // Fetch user profile from database
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile from database for user:', userId);
+      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
+      console.log('Profile query completed:', { data: data?.full_name, error });
+
       if (error) {
-        throw error;
+        console.error('Error fetching user profile:', error);
+        return;
       }
 
       if (data) {
-        setProfile(data as UserProfile);
+        const profileData = data as UserProfile;
+        console.log('Profile loaded from database:', profileData.full_name);
+        setProfile(profileData);
+        // Cache the profile for future use
+        cacheProfile(profileData);
+      } else {
+        console.log('No profile data returned');
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('Error in fetchProfile function:', error);
     }
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    // Initialize auth state
+    const initializeAuth = async () => {
+      try {
+        console.log('Initializing auth...');
+        // Get current session
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        console.log('Initial session check:', { session: currentSession?.user?.id, error });
+        
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+
+        if (mounted) {
+          setSession(currentSession);
+          setUser(currentSession?.user || null);
+          
+          // If we have a session, load profile
+          if (currentSession?.user) {
+            console.log('Found existing session for user:', currentSession.user.id);
+            
+            // First try to load from cache
+            const cachedProfile = loadCachedProfile(currentSession.user.id);
+            if (cachedProfile) {
+              setProfile(cachedProfile);
+            } else {
+              // Only fetch from database if not in cache
+              await fetchProfile(currentSession.user.id);
+            }
+          } else {
+            console.log('No existing session found');
+            // Clear any cached profile if no session
+            clearProfileCache();
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        if (mounted) {
+          console.log('Auth initialization complete, setting loading to false');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('Auth state change:', event, newSession?.user?.id);
+      
+      if (!mounted) return;
+
+      setSession(newSession);
+      setUser(newSession?.user || null);
+      
+      if (event === 'SIGNED_IN' && newSession?.user) {
+        // Check cache first, then fetch from database if needed
+        const cachedProfile = loadCachedProfile(newSession.user.id);
+        if (cachedProfile) {
+          setProfile(cachedProfile);
+        } else {
+          // Only fetch from database if not in cache
+          await fetchProfile(newSession.user.id);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out, clearing profile and cache...');
+        setProfile(null);
+        clearProfileCache();
+      }
+      
+      setIsLoading(false);
+    });
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Refresh the user profile data
   const refreshProfile = async () => {
     if (user?.id) {
+      // Clear cache and fetch fresh data
+      clearProfileCache();
+      setProfile(null);
       await fetchProfile(user.id);
     }
   };
@@ -166,18 +259,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sign out
   const signOut = async () => {
     try {
-      // Clear all local state
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      
-      // Clear local storage manually to ensure complete logout
-      localStorage.removeItem('supabase.auth.token');
-      
-      // Sign out from Supabase
-      await supabase.auth.signOut();
-      
-      return { error: null };
+      const { error } = await supabase.auth.signOut();
+      return { error };
     } catch (error) {
       console.error('Logout error:', error);
       return { error };

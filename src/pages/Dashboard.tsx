@@ -124,9 +124,20 @@ const DashboardProfile = () => {
 };
 
 export default function Dashboard() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("bookings");
   const navigate = useNavigate();
+
+  console.log('Dashboard render:', { user: !!user, profile, isLoading });
+
+  // Show loading state while auth is loading
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Redirect if not logged in
   if (!user) {
@@ -200,6 +211,20 @@ export default function Dashboard() {
 
       {/* Main content */}
       <div className="flex-1 p-6 md:p-8">
+        {/* Mobile tabs */}
+        <div className="md:hidden mb-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              {tabs.map((tab) => (
+                <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
+                  <tab.icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+
         <Card className="border-border">
           <CardHeader>
             <div className="flex justify-between items-center">
