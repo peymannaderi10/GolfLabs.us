@@ -58,9 +58,9 @@ export function UserNav() {
     <div className="flex items-center space-x-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar className="h-10 w-10 bg-primary/20">
-              <AvatarFallback>{initials}</AvatarFallback>
+          <Button variant="ghost" className="group relative h-10 w-10 rounded-full hover:bg-black transition-colors">
+            <Avatar className="h-10 w-10 bg-primary/20 group-hover:bg-black">
+              <AvatarFallback className="bg-transparent group-hover:text-white transition-colors">{initials}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
