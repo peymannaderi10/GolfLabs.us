@@ -7,7 +7,7 @@ import { BookingSummary } from '../components/booking/BookingSummary';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { BOOKING, BAY_IDS, LOCATION_IDS, API } from '@/constants';
+import { BOOKING, LOCATION_IDS, API } from '@/constants';
 import { format } from 'date-fns';
 
 // --- Helper Functions ---
@@ -122,6 +122,14 @@ export interface Booking {
   endTime: string;   // UTC timestamp from backend
 }
 
+export interface Bay {
+  id: string;
+  bay_number: number;
+  name: string;
+  status: string;
+  location_id: string;
+}
+
 export interface SelectionState {
   bayId: string | null;
   startTime: string | null;
@@ -138,6 +146,7 @@ const BookingPage: React.FC = () => {
   });
 
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bays, setBays] = useState<Bay[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [priceDetails, setPriceDetails] = useState<{ total: number; breakdown: any[] } | null>(null);
@@ -152,6 +161,29 @@ const BookingPage: React.FC = () => {
   const availableTimeSlots = useMemo(() => {
     return timeSlots.filter(timeSlot => !isTimeSlotInPast(selectedDate, timeSlot));
   }, [timeSlots, selectedDate]);
+
+  // Fetch bays when component mounts
+  useEffect(() => {
+    const fetchBays = async () => {
+      try {
+        const response = await fetch(`${API.BASE_URL}/bays?locationId=${LOCATION_IDS.CHERRY_HILL}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch bays');
+        }
+        
+        const data = await response.json();
+        // Sort bays by bay_number for consistent ordering
+        const sortedBays = data.sort((a: Bay, b: Bay) => a.bay_number - b.bay_number);
+        setBays(sortedBays);
+      } catch (error) {
+        console.error('Error fetching bays:', error);
+        setError('Failed to load bay information. Please try again.');
+      }
+    };
+    
+    fetchBays();
+  }, []);
 
   // Fetch bookings when the selected date changes
   useEffect(() => {
@@ -275,6 +307,13 @@ const BookingPage: React.FC = () => {
   const handleSlotClick = useCallback((bayId: string, clickedTimeSlot: string) => {
     setError(null); // Clear previous errors
 
+    // Find the bay to check its status
+    const selectedBay = bays.find(bay => bay.id === bayId);
+    if (!selectedBay || selectedBay.status !== 'available') {
+      setError("This bay is currently unavailable.");
+      return;
+    }
+
     if (isSlotBooked(bayId, clickedTimeSlot)) {
       setError("This time slot is already booked.");
       return;
@@ -337,7 +376,7 @@ const BookingPage: React.FC = () => {
       // Valid selection
       return { ...prevSelection, endTime: potentialEndTime };
     });
-  }, [availableTimeSlots, isSlotBooked]);
+  }, [availableTimeSlots, isSlotBooked, bays]);
 
   const handleBookingConfirm = useCallback(() => {
     if (!selection.bayId || !selection.startTime || !selection.endTime || !selectedDate) {
@@ -450,9 +489,9 @@ const BookingPage: React.FC = () => {
               </p>
               </CardHeader>
             <CardContent className="p-0 sm:p-2 md:p-3">
-              {selectedDate ? (
+              {selectedDate && bays.length > 0 ? (
                 <BayTimeTable
-                  bayCount={MAX_BAYS}
+                  bays={bays}
                   timeSlots={availableTimeSlots}
                   bookings={bookings}
                   selection={selection}
@@ -461,7 +500,9 @@ const BookingPage: React.FC = () => {
                   isSlotBooked={isSlotBooked}
                 />
               ) : (
-                <p className="text-muted-foreground text-center py-10">Select a date to see availability.</p>
+                <p className="text-muted-foreground text-center py-10">
+                  {bays.length === 0 ? 'Loading bay information...' : 'Select a date to see availability.'}
+                </p>
               )}
               </CardContent>
             </Card>

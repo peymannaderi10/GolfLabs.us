@@ -1,10 +1,9 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import type { Booking, SelectionState } from '@/pages/Booking';
-import { BAY_IDS } from '@/constants';
+import type { Booking, SelectionState, Bay } from '@/pages/Booking';
 
 interface BayTimeTableProps {
-  bayCount: number;
+  bays: Bay[];
   timeSlots: string[];
   bookings: Booking[];
   selection: SelectionState;
@@ -14,7 +13,7 @@ interface BayTimeTableProps {
 }
 
 export const BayTimeTable: React.FC<BayTimeTableProps> = ({
-  bayCount,
+  bays,
   timeSlots,
   selection,
   selectedDate,
@@ -22,7 +21,12 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
   isSlotBooked,
 }) => {
 
-  const getSlotStatus = (bayId: string, timeSlot: string, selectionState: SelectionState, timeSlotsArray: string[]) => {
+  const getSlotStatus = (bayId: string, timeSlot: string, selectionState: SelectionState, timeSlotsArray: string[], bayStatus: string) => {
+    // If bay is not available, return unavailable status
+    if (bayStatus !== 'available') {
+      return 'unavailable';
+    }
+
     if (isSlotBooked(bayId, timeSlot)) {
       return 'booked';
     }
@@ -52,9 +56,9 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
         <thead className="sticky top-0 z-20">
           <tr className="bg-primary/90">
             <th className="sticky left-0 z-30 bg-primary/90 p-2 border border-border text-xs font-bold text-primary-foreground w-20 min-w-[5rem] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Time</th>
-            {[...Array(bayCount)].map((_, i) => (
-              <th key={`bay-header-${i + 1}`} className="bg-primary/90 p-2 border border-border text-xs font-bold text-primary-foreground min-w-[6rem] md:min-w-[7rem]">
-                Bay {i + 1}
+            {bays.map((bay) => (
+              <th key={`bay-header-${bay.id}`} className="bg-primary/90 p-2 border border-border text-xs font-bold text-primary-foreground min-w-[6rem] md:min-w-[7rem]">
+                {bay.name}
               </th>
             ))}
           </tr>
@@ -65,16 +69,19 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
               <td className="sticky left-0 z-10 p-2 border border-border text-xs text-muted-foreground font-medium w-20 min-w-[5rem] text-center bg-background shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                 {timeSlot}
               </td>
-              {[...Array(bayCount)].map((_, bayIndex) => {
-                const bayNumber = bayIndex + 1;
-                const currentBayId = BAY_IDS[bayNumber as keyof typeof BAY_IDS];
-                const status = getSlotStatus(currentBayId, timeSlot, selection, timeSlots);
+              {bays.map((bay) => {
+                const status = getSlotStatus(bay.id, timeSlot, selection, timeSlots, bay.status);
                 
                 let cellStyles = "p-0 border border-border h-8 min-h-[2rem] cursor-pointer transition-all duration-150 ease-in-out bg-background m-0";
                 let contentStyles = "w-full h-full flex items-center justify-center text-xs";
                 let cellContent = <span className="opacity-50"></span>; // Default empty look for available
 
                 switch (status) {
+                  case 'unavailable':
+                    cellStyles = cn(cellStyles, 'bg-muted/50 cursor-not-allowed border-muted');
+                    contentStyles = cn(contentStyles, 'text-muted-foreground/50');
+                    cellContent = <span className="text-xs">N/A</span>;
+                    break;
                   case 'booked':
                     cellStyles = cn(cellStyles, 'bg-destructive/20 dark:bg-destructive/30 cursor-not-allowed border-destructive/30');
                     contentStyles = cn(contentStyles, 'text-destructive dark:text-destructive/90');
@@ -100,14 +107,16 @@ export const BayTimeTable: React.FC<BayTimeTableProps> = ({
                     break;
                 }
 
+                const isClickable = status !== 'booked' && status !== 'unavailable';
+
                 return (
-                  <td key={`${timeSlot}-bay-${currentBayId}`} className={cellStyles}>
+                  <td key={`${timeSlot}-bay-${bay.id}`} className={cellStyles}>
                     <button 
                       type="button"
                       className={contentStyles}
-                      onClick={() => status !== 'booked' && onSlotClick(currentBayId, timeSlot)}
-                      disabled={status === 'booked'}
-                      aria-label={`Select Bay ${bayNumber} at ${timeSlot}${status === 'booked' ? ' (Booked)' : ''}`}
+                      onClick={() => isClickable && onSlotClick(bay.id, timeSlot)}
+                      disabled={!isClickable}
+                      aria-label={`Select ${bay.name} at ${timeSlot}${!isClickable ? ` (${status === 'unavailable' ? 'Unavailable' : 'Booked'})` : ''}`}
                     >
                       {cellContent}
                     </button>
