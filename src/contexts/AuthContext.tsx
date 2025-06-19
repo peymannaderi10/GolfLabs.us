@@ -154,8 +154,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(newSession?.user || null);
       
       if (event === 'SIGNED_IN' && newSession?.user) {
-        // Skip profile operations if we're currently in the signup process
+        // If we're in the signup process, the profile should already be loaded
         if (isCreatingProfile.current) {
+          // Profile was already loaded during signup, just clear the flag
+          isCreatingProfile.current = false;
           return;
         }
         
@@ -209,52 +211,103 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      if (!error && data.user) {
-        // First check if profile already exists (in case of database trigger)
-        const { data: existingProfile, error: checkError } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('id', data.user.id)
-          .single();
-          
-        if (checkError && checkError.code !== 'PGRST116') {
-          // PGRST116 = "The result contains 0 rows" - this is expected if no profile exists
-          console.error('Error checking existing profile:', checkError);
-          isCreatingProfile.current = false;
-          return { error: checkError };
-        }
-        
-        if (!existingProfile) {
-          // Create profile in user_profiles table
-          const { error: profileError } = await supabase
-            .from('user_profiles')
-            .insert([
-              {
-                id: data.user.id,
-                email: email,
-                full_name: userData.full_name,
-                phone: userData.phone,
-              }
-            ]);
-
-          if (profileError) {
-            console.error('Error creating user profile:', profileError);
-            isCreatingProfile.current = false;
-            return { error: profileError };
-          }
-        }
+      if (error) {
+        isCreatingProfile.current = false;
+        return { error };
       }
 
-      // Clear the flag after a short delay to allow auth state changes to complete
-      setTimeout(() => {
+      if (!data.user) {
         isCreatingProfile.current = false;
-      }, 2000);
+        return { error: new Error('No user data returned from signup') };
+      }
 
-      return { error };
+      // First check if profile already exists (in case of database trigger)
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+        
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 = "The result contains 0 rows" - this is expected if no profile exists
+        console.error('Error checking existing profile:', checkError);
+        
+        // Force logout since the account is in a broken state
+        await supabase.auth.signOut();
+        isCreatingProfile.current = false;
+        return { error: new Error('Failed to verify account setup. Please try signing up again.') };
+      }
+      
+      let profileToCache: UserProfile | null = null;
+      
+      if (existingProfile) {
+        // Profile already exists (via database trigger), use it
+        profileToCache = existingProfile as UserProfile;
+      } else {
+        // Create profile in user_profiles table
+        const { data: newProfile, error: profileError } = await supabase
+          .from('user_profiles')
+          .insert([
+            {
+              id: data.user.id,
+              email: email,
+              full_name: userData.full_name,
+              phone: userData.phone,
+            }
+          ])
+          .select('*')
+          .single();
+
+        if (profileError) {
+          console.error('Error creating user profile:', profileError);
+          
+          // Critical failure: user is authenticated but no profile exists
+          // Force logout to prevent broken state
+          await supabase.auth.signOut();
+          isCreatingProfile.current = false;
+          return { 
+            error: new Error('Failed to create your account profile. Please try signing up again.') 
+          };
+        }
+        
+        profileToCache = newProfile as UserProfile;
+      }
+      
+      // Verify we actually have profile data
+      if (!profileToCache) {
+        console.error('No profile data available after creation');
+        
+        // Force logout since we can't verify the account is properly set up
+        await supabase.auth.signOut();
+        isCreatingProfile.current = false;
+        return { 
+          error: new Error('Account setup incomplete. Please try signing up again.') 
+        };
+      }
+      
+      // Immediately set the profile in context and cache it
+      // This ensures the UI shows the correct data right away
+      setProfile(profileToCache);
+      cacheProfile(profileToCache);
+      
+      // Clear the flag since we've successfully loaded the profile
+      isCreatingProfile.current = false;
+
+      return { error: null };
     } catch (error) {
       console.error('Error during sign up:', error);
+      
+      // Force logout in case of any unexpected errors
+      try {
+        await supabase.auth.signOut();
+      } catch (logoutError) {
+        console.error('Error during cleanup logout:', logoutError);
+      }
+      
       isCreatingProfile.current = false;
-      return { error };
+      return { 
+        error: error instanceof Error ? error : new Error('An unexpected error occurred during signup') 
+      };
     }
   };
 
