@@ -256,32 +256,32 @@ const CheckoutPage = () => {
     };
 
     const createNewReservation = async () => {
-      const reservationResponse = await fetch(`${API.BASE_URL}/bookings/reserve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        const reservationResponse = await fetch(`${API.BASE_URL}/bookings/reserve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
           date: format(bookingDetails.selectedDate, 'yyyy-MM-dd'),
-          bayId: bookingDetails.bayId,
-          startTime: bookingDetails.startTime,
-          endTime: bookingDetails.endTime,
+            bayId: bookingDetails.bayId,
+            startTime: bookingDetails.startTime,
+            endTime: bookingDetails.endTime,
           partySize: 1,
           userId: user.id,
-          locationId: LOCATION_IDS.CHERRY_HILL,
+            locationId: LOCATION_IDS.CHERRY_HILL,
           totalAmount: bookingDetails.price,
-        }),
-      });
+          }),
+        });
 
-      if (!reservationResponse.ok) {
-        const errorData = await reservationResponse.json();
+        if (!reservationResponse.ok) {
+          const errorData = await reservationResponse.json();
         if (reservationResponse.status === 409 || errorData.error?.includes('no longer available')) {
-          throw new Error('This time slot is no longer available. Please select a different time.');
-        }
+            throw new Error('This time slot is no longer available. Please select a different time.');
+          }
         throw new Error(errorData.error || 'Failed to create reservation');
-      }
+        }
 
-      const reservationData = await reservationResponse.json();
-      setBookingId(reservationData.bookingId);
-      
+        const reservationData = await reservationResponse.json();
+        setBookingId(reservationData.bookingId);
+
       // Save reservation to session storage
       saveReservationToSession(reservationData.bookingId, reservationData.expiresAt);
 
@@ -291,14 +291,14 @@ const CheckoutPage = () => {
 
     const createPaymentIntent = async (bookingId: string) => {
       const paymentResponse = await fetch(`${API.BASE_URL}/bookings/${bookingId}/create-payment-intent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
           amount: Math.round(bookingDetails.price * 100),
-        }),
-      });
+          }),
+        });
 
-      if (!paymentResponse.ok) {
+        if (!paymentResponse.ok) {
         const errorData = await paymentResponse.json();
         if (paymentResponse.status === 410) {
           // Reservation expired
@@ -307,11 +307,11 @@ const CheckoutPage = () => {
           return;
         }
         throw new Error(errorData.error || 'Failed to create payment intent');
-      }
+        }
 
-      const paymentData = await paymentResponse.json();
-      setClientSecret(paymentData.clientSecret);
-      setIsLoading(false);
+        const paymentData = await paymentResponse.json();
+        setClientSecret(paymentData.clientSecret);
+        setIsLoading(false);
     };
 
     handleBookingFlow();
