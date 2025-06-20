@@ -192,17 +192,47 @@ const CheckoutPage = () => {
         const sessionReservation = loadReservationFromSession();
         if (sessionReservation) {
           console.log('Found existing reservation in session:', sessionReservation.bookingId);
-          setBookingId(sessionReservation.bookingId);
           
-          // Calculate remaining time
-          const expiresAt = new Date(sessionReservation.expiresAt);
-          const now = new Date();
-          const remainingSeconds = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000));
-          setTimeLeft(remainingSeconds);
-          
-          // Create payment intent for existing reservation
-          await createPaymentIntent(sessionReservation.bookingId);
-          return;
+          // Validate that this booking is still valid by checking its status
+          try {
+            const validationResponse = await fetch(`${API.BASE_URL}/users/${user.id}/bookings/reserved`);
+            if (validationResponse.ok) {
+              const validationData = await validationResponse.json();
+              const activeReservation = validationData.reservation;
+              
+              // Check if the session booking matches an active reservation
+              if (!activeReservation || activeReservation.id !== sessionReservation.bookingId) {
+                console.log('Session booking is no longer valid, clearing session and creating new booking');
+                clearCheckoutSession();
+                await createNewReservation();
+                return;
+              }
+              
+              // Session booking is still valid, use it
+              setBookingId(sessionReservation.bookingId);
+              
+              // Calculate remaining time
+              const expiresAt = new Date(sessionReservation.expiresAt);
+              const now = new Date();
+              const remainingSeconds = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000));
+              setTimeLeft(remainingSeconds);
+              
+              // Create payment intent for existing reservation
+              await createPaymentIntent(sessionReservation.bookingId);
+              return;
+            } else {
+              // Unable to validate, clear session and create new booking
+              console.log('Unable to validate session booking, creating new one');
+              clearCheckoutSession();
+              await createNewReservation();
+              return;
+            }
+          } catch (validationError) {
+            console.warn('Error validating session booking:', validationError);
+            clearCheckoutSession();
+            await createNewReservation();
+            return;
+          }
         }
 
         // Check for existing reservations in the database

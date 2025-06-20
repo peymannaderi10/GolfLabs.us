@@ -184,6 +184,25 @@ const BookingsList = ({ type }: { type: 'upcoming' | 'past' }) => {
       // Show success message
       alert(result.message || 'Booking cancelled successfully');
 
+      // Clear any session storage that might contain this booking ID
+      try {
+        const BOOKING_SESSION_KEY = 'golflabs_booking_details';
+        const RESERVATION_SESSION_KEY = 'golflabs_reservation';
+        
+        // Check if the cancelled booking matches the session booking
+        const sessionReservation = sessionStorage.getItem(RESERVATION_SESSION_KEY);
+        if (sessionReservation) {
+          const reservationData = JSON.parse(sessionReservation);
+          if (reservationData.bookingId === bookingId) {
+            sessionStorage.removeItem(BOOKING_SESSION_KEY);
+            sessionStorage.removeItem(RESERVATION_SESSION_KEY);
+            console.log('Cleared session storage for cancelled booking:', bookingId);
+          }
+        }
+      } catch (sessionError) {
+        console.warn('Failed to clear session storage:', sessionError);
+      }
+
       // Refresh bookings list
       await fetchBookings();
     } catch (error: any) {

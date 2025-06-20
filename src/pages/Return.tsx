@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, Home, RefreshCw } from 'lucide-react';
+import { CheckCircle, AlertCircle, LayoutDashboard, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -90,11 +90,11 @@ const Return = () => {
           <div className="pt-4 flex gap-4 justify-center">
             <Button
               variant="outline"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/dashboard')}
               className="flex items-center gap-2"
             >
-              <Home className="h-4 w-4" />
-              Return Home
+              <LayoutDashboard className="h-4 w-4" />
+              Go to Dashboard
             </Button>
             <Button
               onClick={() => navigate('/booking')}
