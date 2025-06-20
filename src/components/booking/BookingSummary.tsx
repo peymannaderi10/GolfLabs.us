@@ -6,6 +6,7 @@ import { MapPin, Calendar, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, 
 import type { SelectionState } from '@/pages/Booking'; // Import SelectionState
 import { timeToIndex, TIME_INTERVAL_MINUTES, generateTimeSlots } from '@/pages/Booking'; // Import generateTimeSlots
 import { BAY_NUMBERS } from '@/constants';
+import { useLocation } from '@/contexts/LocationContext';
 
 export interface BookingSummaryProps {
   selectedDate: Date | null;
@@ -27,6 +28,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   className,
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
+  const { currentLocation } = useLocation();
 
   const { bayId, startTime, endTime } = selection;
 
@@ -204,26 +206,26 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                 )}
               </div>
 
-              {priceDetails && priceDetails.breakdown && priceDetails.breakdown.length > 0 && (
+              {priceDetails && priceDetails.breakdown && priceDetails.breakdown.length > 0 && currentLocation && (
                 <div className="space-y-2 border-t border-border pt-3">
                   <div className="text-sm font-semibold text-muted-foreground">Price Breakdown:</div>
                   {priceDetails.breakdown.map((segment, index) => {
-                    // Convert UTC times to local time
+                    // Convert UTC times to location timezone for display
                     const startDate = new Date(segment.start);
                     const endDate = new Date(segment.end);
                     
-                    // Format times in 12-hour format
-                    const startTime = startDate.toLocaleTimeString('en-US', {
+                    // Format times in 12-hour format using location timezone
+                    const startTime = startDate.toLocaleString('en-US', {
                       hour: 'numeric',
                       minute: '2-digit',
                       hour12: true,
-                      timeZone: 'UTC' // Keep UTC for display
+                      timeZone: currentLocation.timezone
                     });
-                    const endTime = endDate.toLocaleTimeString('en-US', {
+                    const endTime = endDate.toLocaleString('en-US', {
                       hour: 'numeric',
                       minute: '2-digit',
                       hour12: true,
-                      timeZone: 'UTC' // Keep UTC for display
+                      timeZone: currentLocation.timezone
                     });
 
                     return (

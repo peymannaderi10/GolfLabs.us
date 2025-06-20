@@ -14,6 +14,7 @@ import { User, LogOut } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { BookNowButton } from "./BookNowButton";
+import { LocationSelector } from "./LocationSelector";
 
 export function UserNav() {
   const { user, profile, signOut } = useAuth();
@@ -39,6 +40,7 @@ export function UserNav() {
   if (!user) {
     return (
       <div className="flex items-center space-x-4">
+        <LocationSelector variant="outline" />
         <Link to="/login">
           <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold">
             Login
@@ -56,6 +58,7 @@ export function UserNav() {
 
   return (
     <div className="flex items-center space-x-4">
+      <LocationSelector />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="group relative h-10 w-10 rounded-full hover:bg-black transition-colors">

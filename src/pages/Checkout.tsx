@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation as useRouterLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, DollarSign, ChevronLeft, CheckCircle, AlertCircle, Timer } from 'lucide-react';
@@ -8,18 +8,10 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { StripeCheckoutForm } from '../components/checkout/StripeCheckoutForm';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { BAY_NUMBERS, LOCATION_IDS, API } from '@/constants';
+import { BAY_NUMBERS, API } from '@/constants';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocation } from '@/contexts/LocationContext';
 import { format } from 'date-fns';
-
-// Helper function to parse time string (e.g., "2:30 PM") and return hours and minutes
-const parseTimeString = (timeStr: string): { hours: number; minutes: number } => {
-  const [time, period] = timeStr.split(' ');
-  const [hours, minutes] = time.split(':').map(Number);
-  const isPM = period === 'PM';
-  const hour24 = isPM ? (hours === 12 ? 12 : hours + 12) : (hours === 12 ? 0 : hours);
-  return { hours: hour24, minutes };
-};
 
 // Session storage utilities for booking details
 const BOOKING_SESSION_KEY = 'golflabs_checkout_booking';
@@ -119,9 +111,10 @@ interface ExistingReservation {
 }
 
 const CheckoutPage = () => {
-  const location = useLocation();
+  const location = useRouterLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentLocation, formatDateInLocationTimezone } = useLocation();
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -179,7 +172,7 @@ const CheckoutPage = () => {
 
   // Check for existing reservations and handle booking creation
   useEffect(() => {
-    if (!bookingDetails || !user) {
+    if (!bookingDetails || !user || !currentLocation) {
       setIsLoading(false);
       return;
     }
@@ -296,7 +289,7 @@ const CheckoutPage = () => {
             endTime: bookingDetails.endTime,
           partySize: 1,
           userId: user.id,
-            locationId: LOCATION_IDS.CHERRY_HILL,
+            locationId: currentLocation.id,
           totalAmount: bookingDetails.price,
           }),
         });
@@ -345,7 +338,7 @@ const CheckoutPage = () => {
     };
 
     handleBookingFlow();
-  }, [bookingDetails, user]);
+  }, [bookingDetails, user, currentLocation]);
 
   // Clean up session storage when component unmounts or user navigates away
   useEffect(() => {
@@ -357,7 +350,7 @@ const CheckoutPage = () => {
     };
   }, []);
 
-  if (!bookingDetails) {
+  if (!bookingDetails || !currentLocation) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -481,7 +474,7 @@ const CheckoutPage = () => {
                     <Calendar className="h-4 w-4 mr-2 flex-shrink-0" /> Date:
                   </div>
                   <span className="font-medium text-foreground">
-                    {new Date(bookingDetails.selectedDate).toLocaleDateString()}
+                    {formatDateInLocationTimezone(bookingDetails.selectedDate, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                   </span>
                 </div>
 
@@ -548,11 +541,6 @@ const CheckoutPage = () => {
                   <StripeCheckoutForm 
                     amount={Math.round(bookingDetails.price * 100)}
                     clientSecret={clientSecret}
-                    onSuccess={() => {
-                      // Clear session storage on successful payment
-                      clearCheckoutSession();
-                      console.log('Payment successful, session cleared');
-                    }}
                   />
                 </Elements>
               ) : (

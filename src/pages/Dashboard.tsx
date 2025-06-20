@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "@/contexts/LocationContext";
 import { Navigate, Link, useNavigate } from "react-router-dom";
 import { Calendar, Clock, User, Loader2, X, Timer, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
 import { API } from '@/constants';
-import { convertUTCToLocalTime } from '@/pages/Booking';
 
 // Components
 import { Button } from "@/components/ui/button";
@@ -60,12 +60,13 @@ const BookingCard = ({
   isUpcoming?: boolean;
 }) => {
   const [isCancelling, setIsCancelling] = useState(false);
+  const { formatDateInLocationTimezone } = useLocation();
   const cancellationInfo = canCancelBooking(booking.startTime);
 
   const handleCancel = async () => {
     if (!onCancel || !cancellationInfo.canCancel) return;
 
-    const confirmMessage = `Are you sure you want to cancel this booking?\n\nDate: ${format(new Date(booking.startTime), "eeee, MMMM do, yyyy")}\nTime: ${format(new Date(booking.startTime), "p")} - ${format(new Date(booking.endTime), "p")}\nBay: ${booking.bayName}\nAmount: $${booking.totalAmount}\n\nThis action cannot be undone and a full refund will be processed.`;
+    const confirmMessage = `Are you sure you want to cancel this booking?\n\nDate: ${formatDateInLocationTimezone(booking.startTime, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\nTime: ${formatDateInLocationTimezone(booking.startTime, { hour: 'numeric', minute: '2-digit', hour12: true })} - ${formatDateInLocationTimezone(booking.endTime, { hour: 'numeric', minute: '2-digit', hour12: true })}\nBay: ${booking.bayName}\nAmount: $${booking.totalAmount}\n\nThis action cannot be undone and a full refund will be processed.`;
     
     if (window.confirm(confirmMessage)) {
       setIsCancelling(true);
@@ -83,7 +84,7 @@ const BookingCard = ({
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg">{booking.bayName}</CardTitle>
-            <CardDescription>{format(new Date(booking.startTime), "eeee, MMMM do, yyyy")}</CardDescription>
+            <CardDescription>{formatDateInLocationTimezone(booking.startTime, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
           </div>
           {isUpcoming && booking.status === 'confirmed' && (
             <div className="flex flex-col items-end gap-2">
@@ -120,7 +121,7 @@ const BookingCard = ({
       <CardContent className="grid gap-2">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Time:</span>
-          <span>{format(new Date(booking.startTime), "p")} - {format(new Date(booking.endTime), "p")}</span>
+          <span>{formatDateInLocationTimezone(booking.startTime, { hour: 'numeric', minute: '2-digit', hour12: true })} - {formatDateInLocationTimezone(booking.endTime, { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Status:</span>
@@ -288,6 +289,7 @@ const DashboardProfile = () => {
 // Component for displaying active reservations
 const ReservedBookingCard = () => {
   const { user } = useAuth();
+  const { formatDateInLocationTimezone } = useLocation();
   const navigate = useNavigate();
   const [reservation, setReservation] = useState<ReservedBooking | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -323,6 +325,20 @@ const ReservedBookingCard = () => {
     fetchReservation();
   }, [user]);
 
+  // Refetch reservation when window regains focus (user returns from payment)
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('Window focused, refetching reservation status');
+      fetchReservation();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user]);
+
   // Timer effect
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -351,16 +367,12 @@ const ReservedBookingCard = () => {
   const handleContinue = () => {
     if (!reservation) return;
 
-    // Use the same timezone conversion logic as the booking page
-    const startTimeFormatted = convertUTCToLocalTime(reservation.startTime);
-    const endTimeFormatted = convertUTCToLocalTime(reservation.endTime);
-    
     // Save booking details to session storage for checkout
     const bookingDetails = {
       selectedDate: new Date(reservation.startTime),
       bayId: reservation.bayId,
-      startTime: startTimeFormatted,
-      endTime: endTimeFormatted,
+      startTime: formatDateInLocationTimezone(reservation.startTime, { hour: 'numeric', minute: '2-digit', hour12: true }),
+      endTime: formatDateInLocationTimezone(reservation.endTime, { hour: 'numeric', minute: '2-digit', hour12: true }),
       duration: `${Math.round((new Date(reservation.endTime).getTime() - new Date(reservation.startTime).getTime()) / (1000 * 60))} minutes`,
       price: reservation.totalAmount
     };
@@ -398,20 +410,13 @@ const ReservedBookingCard = () => {
 
   const isExpiringSoon = timeLeft <= 30;
 
-  // Use the same timezone conversion logic as the booking page
-  const startTimeFormatted = convertUTCToLocalTime(reservation.startTime);
-  const endTimeFormatted = convertUTCToLocalTime(reservation.endTime);
-  
-  // Parse the converted times for date formatting
-  const startTimeForDate = new Date(reservation.startTime);
-
   return (
     <Card className="mb-6 border-primary/20 bg-primary/5">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg text-primary">Active Reservation</CardTitle>
-            <CardDescription>{format(startTimeForDate, "eeee, MMMM do, yyyy")}</CardDescription>
+            <CardDescription>{formatDateInLocationTimezone(reservation.startTime, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
           </div>
           <div className="flex items-center">
             <Button
@@ -445,7 +450,7 @@ const ReservedBookingCard = () => {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Time:</span>
             <span className="font-medium">
-              {startTimeFormatted} - {endTimeFormatted}
+              {formatDateInLocationTimezone(reservation.startTime, { hour: 'numeric', minute: '2-digit', hour12: true })} - {formatDateInLocationTimezone(reservation.endTime, { hour: 'numeric', minute: '2-digit', hour12: true })}
             </span>
           </div>
           <div className="flex justify-between">

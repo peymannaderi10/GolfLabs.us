@@ -84,9 +84,8 @@ export function StripeCheckoutForm({ amount, clientSecret, onSuccess }: StripeCh
       } else {
         toast({
           title: "Payment processing",
-          description: "Your payment is being processed. Please wait...",
+          description: "Your payment is being processed. Redirecting...",
         });
-        onSuccess?.();
       }
     } catch (error) {
       console.error('Payment error:', error);

@@ -12,6 +12,17 @@ interface PaymentStatus {
   currency?: string;
 }
 
+// Session storage cleanup function
+const clearCheckoutSession = () => {
+  try {
+    sessionStorage.removeItem('golflabs_checkout_booking');
+    sessionStorage.removeItem('golflabs_checkout_reservation');
+    console.log('Session storage cleared after successful payment');
+  } catch (error) {
+    console.warn('Failed to clear checkout session:', error);
+  }
+};
+
 const Return = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,6 +51,12 @@ const Return = () => {
       })
       .then((data) => {
         setPaymentStatus(data);
+        
+        // Clear session storage if payment succeeded
+        if (data.status === 'succeeded') {
+          clearCheckoutSession();
+        }
+        
         setLoading(false);
       })
       .catch((err) => {

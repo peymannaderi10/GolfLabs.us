@@ -26,28 +26,17 @@ export const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
 
-  // Optional: Check if a day has any bookings at all
+  // Check if a day has any bookings - simplified since bookings are now just time strings
   const bookedDayIndicator = React.useMemo(() => {
-    if (!bookings || bookings.length === 0) return new Set();
+    if (!bookings || bookings.length === 0 || !selectedDate) return new Set();
     const datesWithBookings = new Set<string>();
-    bookings.forEach(booking => {
-      try {
-        // Check if startTime is a full timestamp or just a time string
-        if (booking.startTime.includes('T') || booking.startTime.includes('-')) {
-          // It's a full timestamp
-          const bookingDate = new Date(booking.startTime);
-          const dateString = formatDateToYYYYMMDD(bookingDate);
-          datesWithBookings.add(dateString);
-        } else {
-          // It's just a time string, use the selected date
-          if (selectedDate) {
-            datesWithBookings.add(formatDateToYYYYMMDD(selectedDate));
-          }
-        }
-      } catch (error) {
-        console.error("Error processing booking date:", error, booking);
-      }
-    });
+    
+    // Since bookings are fetched for the selected date, if there are any bookings,
+    // mark the selected date as having bookings
+    if (bookings.length > 0) {
+      datesWithBookings.add(formatDateToYYYYMMDD(selectedDate));
+    }
+    
     return datesWithBookings;
   }, [bookings, selectedDate]);
 

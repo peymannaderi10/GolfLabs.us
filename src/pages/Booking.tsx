@@ -7,7 +7,8 @@ import { BookingSummary } from '../components/booking/BookingSummary';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { BOOKING, LOCATION_IDS, API } from '@/constants';
+import { BOOKING, API } from '@/constants';
+import { useLocation } from '@/contexts/LocationContext';
 import { format } from 'date-fns';
 
 // --- Helper Functions ---
@@ -20,36 +21,6 @@ const MAX_SLOTS_DURATION = BOOKING.MAX_SLOTS_DURATION;
 export const formatDateToYYYYMMDD = (date: Date | null): string => {
   if (!date) return '';
   return format(date, 'yyyy-MM-dd');
-};
-
-// Convert UTC time string to local time string
-export const convertUTCToLocalTime = (timeString: string): string => {
-  try {
-    // Check if it's already a formatted time string (e.g., "2:00 PM")
-    if (timeString.includes('AM') || timeString.includes('PM')) {
-      return timeString; // Already formatted, return as is
-    }
-    
-    // Check if it's a full timestamp
-    if (timeString.includes('T') || timeString.includes('-')) {
-      const date = new Date(timeString);
-      return date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-        timeZone: 'UTC' // Ensure we're working with UTC times
-      });
-    }
-    
-    // If it's just a time string (e.g., "14:00:00")
-    const [hours, minutes] = timeString.split(':').map(Number);
-    const hour12 = hours % 12 || 12;
-    const period = hours < 12 ? 'AM' : 'PM';
-    return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
-  } catch (error) {
-    console.error("Error converting time:", error, timeString);
-    return timeString; // Return original on error
-  }
 };
 
 // Generate time slots from 00:00 to 23:45 with 15-minute intervals, plus 23:59
@@ -82,7 +53,7 @@ export const timeToIndex = (timeString: string, timeSlots: string[]): number => 
 };
 
 // Helper function to check if a time slot is in the past for the current day
-const isTimeSlotInPast = (selectedDate: Date, timeSlot: string): boolean => {
+const isTimeSlotInPast = (selectedDate: Date, timeSlot: string, timezone: string): boolean => {
   const now = new Date();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -106,20 +77,23 @@ const isTimeSlotInPast = (selectedDate: Date, timeSlot: string): boolean => {
     hour24 = 0;
   }
   
-  // Create a date object for the time slot on the selected date
+  // Create a date object for the time slot on the selected date in the location's timezone
   const slotTime = new Date(selectedDate);
   slotTime.setHours(hour24, minutes, 0, 0);
   
+  // Convert current time to location timezone for comparison
+  const nowInLocationTz = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+  
   // Check if the slot time is before the current time
-  return slotTime < now;
+  return slotTime < nowInLocationTz;
 };
 
 // --- Interfaces ---
 export interface Booking {
   id: string;
   bayId: string;
-  startTime: string; // UTC timestamp from backend
-  endTime: string;   // UTC timestamp from backend
+  startTime: string; // Already formatted time string from backend
+  endTime: string;   // Already formatted time string from backend
 }
 
 export interface Bay {
@@ -153,20 +127,24 @@ const BookingPage: React.FC = () => {
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
 
   const navigate = useNavigate();
+  const { currentLocation, getLocationTimezone } = useLocation();
   
   // Time slots generation (00:00 to 23:45 in 15-minute intervals)
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
-  // Filter out past time slots for the current day
+  // Filter out past time slots for the current day using location timezone
   const availableTimeSlots = useMemo(() => {
-    return timeSlots.filter(timeSlot => !isTimeSlotInPast(selectedDate, timeSlot));
-  }, [timeSlots, selectedDate]);
+    if (!currentLocation) return timeSlots;
+    return timeSlots.filter(timeSlot => !isTimeSlotInPast(selectedDate, timeSlot, currentLocation.timezone));
+  }, [timeSlots, selectedDate, currentLocation]);
 
-  // Fetch bays when component mounts
+  // Fetch bays when component mounts or location changes
   useEffect(() => {
     const fetchBays = async () => {
+      if (!currentLocation) return;
+      
       try {
-        const response = await fetch(`${API.BASE_URL}/bays?locationId=${LOCATION_IDS.CHERRY_HILL}`);
+        const response = await fetch(`${API.BASE_URL}/bays?locationId=${currentLocation.id}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch bays');
@@ -183,11 +161,13 @@ const BookingPage: React.FC = () => {
     };
     
     fetchBays();
-  }, []);
+  }, [currentLocation]);
 
-  // Fetch bookings when the selected date changes
+  // Fetch bookings when the selected date or location changes
   useEffect(() => {
     const fetchBookings = async () => {
+      if (!currentLocation) return;
+      
       try {
         setIsLoading(true);
         setError(null);
@@ -195,7 +175,7 @@ const BookingPage: React.FC = () => {
         // Format date as YYYY-MM-DD for API
         const formattedDate = format(selectedDate, 'yyyy-MM-dd');
         
-        const response = await fetch(`${API.BASE_URL}/bookings?locationId=${LOCATION_IDS.CHERRY_HILL}&date=${formattedDate}`);
+        const response = await fetch(`${API.BASE_URL}/bookings?locationId=${currentLocation.id}&date=${formattedDate}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch bookings');
@@ -203,20 +183,13 @@ const BookingPage: React.FC = () => {
         
         const data = await response.json();
         
-        // Safely convert time formats, handling both old and new formats
-        const formattedBookings = data.map((booking: any) => {
-          try {
-            return {
-              id: booking.id,
-              bayId: booking.bayId,
-              startTime: convertUTCToLocalTime(booking.startTime),
-              endTime: convertUTCToLocalTime(booking.endTime)
-            };
-          } catch (error) {
-            console.error("Error processing booking:", error, booking);
-            return booking; // Return original on error
-          }
-        });
+        // Backend now returns properly formatted booking data, no conversion needed
+        const formattedBookings = data.map((booking: any) => ({
+          id: booking.id,
+          bayId: booking.bayId,
+          startTime: booking.startTime,
+          endTime: booking.endTime
+        }));
         
         setBookings(formattedBookings);
       } catch (error) {
@@ -228,9 +201,10 @@ const BookingPage: React.FC = () => {
     };
     
     fetchBookings();
-  }, [selectedDate]);
+  }, [selectedDate, currentLocation]);
 
-  const createISOForBackend = (date: Date, timeString: string): string => {
+  // Helper function to create ISO timestamp for backend
+  const createISOTimestamp = (date: Date, timeString: string): string => {
     const [time, period] = timeString.split(' ');
     const [hours, minutes] = time.split(':').map(Number);
     const isPM = period.toUpperCase() === 'PM';
@@ -243,27 +217,26 @@ const BookingPage: React.FC = () => {
     }
 
     const isoDate = new Date(date);
-    // We use UTC hours because the backend expects UTC timestamps
-    isoDate.setUTCHours(hour24, minutes, 0, 0);
+    isoDate.setHours(hour24, minutes, 0, 0);
     return isoDate.toISOString();
   };
 
   useEffect(() => {
       const calculatePrice = async () => {
-          if (selection.startTime && selection.endTime && selectedDate) {
+          if (selection.startTime && selection.endTime && selectedDate && currentLocation) {
               setIsCalculatingPrice(true);
               setPriceDetails(null);
               setError(null);
 
               try {
-                  const startTimeISO = createISOForBackend(selectedDate, selection.startTime);
-                  const endTimeISO = createISOForBackend(selectedDate, selection.endTime);
+                  const startTimeISO = createISOTimestamp(selectedDate, selection.startTime);
+                  const endTimeISO = createISOTimestamp(selectedDate, selection.endTime);
 
                   const response = await fetch(`${API.BASE_URL}/calculate-price`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
-                          locationId: LOCATION_IDS.CHERRY_HILL,
+                          locationId: currentLocation.id,
                           startTime: startTimeISO,
                           endTime: endTimeISO,
                       }),
@@ -291,7 +264,7 @@ const BookingPage: React.FC = () => {
       };
 
       calculatePrice();
-  }, [selection.startTime, selection.endTime, selectedDate]);
+  }, [selection.startTime, selection.endTime, selectedDate, currentLocation]);
 
   // Check if a slot is booked
   const isSlotBooked = useCallback((bayId: string, timeSlot: string): boolean => {
@@ -419,6 +392,18 @@ const BookingPage: React.FC = () => {
     setError(null);
   }, []);
 
+  // Show loading or error if location is not available
+  if (!currentLocation) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Loading location...</h2>
+          <p className="text-muted-foreground">Please wait while we load the location information.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
@@ -457,8 +442,8 @@ const BookingPage: React.FC = () => {
       <div className="px-4 md:px-6 pb-24">
         <div className="mb-4 md:mb-6 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">Book Your Golf Bay</h1>
-
-      </div>
+          <p className="text-muted-foreground">{currentLocation.name}</p>
+        </div>
 
         {error && (
           <div className="w-full mx-auto mb-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-md flex items-center justify-center text-sm">
