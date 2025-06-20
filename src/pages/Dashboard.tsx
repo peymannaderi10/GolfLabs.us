@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, Link, useNavigate } from "react-router-dom";
-import { Calendar, Clock, User, Loader2, X } from "lucide-react";
+import { Calendar, Clock, User, Loader2, X, Timer, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
 import { API } from '@/constants';
+import { convertUTCToLocalTime } from '@/pages/Booking';
 
 // Components
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookNowButton } from "@/components/BookNowButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Booking {
   id: string;
@@ -21,6 +23,19 @@ interface Booking {
   status: string;
   bayName: string;
   bayNumber: number;
+}
+
+interface ReservedBooking {
+  id: string;
+  startTime: string;
+  endTime: string;
+  totalAmount: number;
+  status: string;
+  expiresAt: string;
+  bayId: string;
+  locationId: string;
+  bayName: string;
+  bayNumber: string;
 }
 
 // Helper function to check if booking can be cancelled (24-hour policy)
@@ -270,6 +285,179 @@ const DashboardProfile = () => {
   );
 };
 
+// Component for displaying active reservations
+const ReservedBookingCard = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [reservation, setReservation] = useState<ReservedBooking | null>(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch reservation data
+  const fetchReservation = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await fetch(`${API.BASE_URL}/users/${user.id}/bookings/reserved`);
+      const data = await response.json();
+      
+      if (data.reservation) {
+        setReservation(data.reservation);
+        
+        // Calculate remaining time
+        const expiresAt = new Date(data.reservation.expiresAt);
+        const now = new Date();
+        const remainingSeconds = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000));
+        setTimeLeft(remainingSeconds);
+      } else {
+        setReservation(null);
+      }
+    } catch (error) {
+      console.error('Error fetching reservation:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReservation();
+  }, [user]);
+
+  // Timer effect
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 1) {
+          // Reservation expired, refresh data
+          fetchReservation();
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleContinue = () => {
+    if (!reservation) return;
+
+    // Use the same timezone conversion logic as the booking page
+    const startTimeFormatted = convertUTCToLocalTime(reservation.startTime);
+    const endTimeFormatted = convertUTCToLocalTime(reservation.endTime);
+    
+    // Save booking details to session storage for checkout
+    const bookingDetails = {
+      selectedDate: new Date(reservation.startTime),
+      bayId: reservation.bayId,
+      startTime: startTimeFormatted,
+      endTime: endTimeFormatted,
+      duration: `${Math.round((new Date(reservation.endTime).getTime() - new Date(reservation.startTime).getTime()) / (1000 * 60))} minutes`,
+      price: reservation.totalAmount
+    };
+
+    // Save to session storage
+    try {
+      sessionStorage.setItem('golflabs_checkout_booking', JSON.stringify({
+        ...bookingDetails,
+        selectedDate: bookingDetails.selectedDate.toISOString()
+      }));
+      sessionStorage.setItem('golflabs_checkout_reservation', JSON.stringify({
+        bookingId: reservation.id,
+        expiresAt: reservation.expiresAt,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.warn('Failed to save to session storage:', error);
+    }
+
+    // Navigate to checkout
+    navigate('/checkout', { state: { bookingDetails } });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-4">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!reservation || timeLeft <= 0) {
+    return null;
+  }
+
+  const isExpiringSoon = timeLeft <= 30;
+
+  // Use the same timezone conversion logic as the booking page
+  const startTimeFormatted = convertUTCToLocalTime(reservation.startTime);
+  const endTimeFormatted = convertUTCToLocalTime(reservation.endTime);
+  
+  // Parse the converted times for date formatting
+  const startTimeForDate = new Date(reservation.startTime);
+
+  return (
+    <Card className="mb-6 border-primary/20 bg-primary/5">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-lg text-primary">Active Reservation</CardTitle>
+            <CardDescription>{format(startTimeForDate, "eeee, MMMM do, yyyy")}</CardDescription>
+          </div>
+          <div className="flex items-center">
+            <Button
+              size="sm"
+              onClick={handleContinue}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <ArrowRight className="h-4 w-4 mr-2" />
+              Continue Booking
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Timer Alert */}
+        <Alert className={`${isExpiringSoon ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-primary bg-primary/10'}`}>
+          <div className="flex items-center">
+            <Timer className={`h-4 w-4 mr-2 flex-shrink-0 ${isExpiringSoon ? 'text-orange-500' : 'text-primary'}`} />
+            <AlertDescription className={`font-medium ${isExpiringSoon ? 'text-orange-600 dark:text-orange-400' : 'text-primary'}`}>
+              Reservation expires in: <span className="font-bold text-lg">{formatTime(timeLeft)}</span>
+            </AlertDescription>
+          </div>
+        </Alert>
+
+        {/* Booking Details */}
+        <div className="grid gap-2">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Bay:</span>
+            <span className="font-medium">{reservation.bayName}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Time:</span>
+            <span className="font-medium">
+              {startTimeFormatted} - {endTimeFormatted}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Total:</span>
+            <span className="font-medium">${reservation.totalAmount}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function Dashboard() {
   const { user, profile, signOut, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("bookings");
@@ -390,6 +578,9 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Always show reserved booking at the top if it exists */}
+            <ReservedBookingCard />
+            
             {activeTab === "bookings" && <BookingsList type="upcoming" />}
             {activeTab === "past-bookings" && <BookingsList type="past" />}
             {activeTab === "profile" && <DashboardProfile />}
